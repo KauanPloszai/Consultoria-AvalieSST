@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AvaliESST | Login</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="login-shell">
+      <section class="login-panel" aria-label="Acesso ao sistema">
+        <div class="brand">
+          <img class="brand__logo" src="img/logo.png" alt="AvalieSST" />
+        </div>
+
+        <header class="login-copy">
+          <h1>Bem-vindo de volta!</h1>
+          <p>Acesse o painel de gestão de riscos psicossociais</p>
+        </header>
+
+        <form class="login-form" novalidate>
+          <label class="field">
+            <span class="field__label">E-mail <strong>*</strong></span>
+            <input id="email" name="email" type="email" placeholder="Digite seu e-mail corporativo" />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Senha <strong>*</strong></span>
+            <input id="password" name="password" type="password" placeholder="Digite sua senha" />
+          </label>
+
+          <div class="login-form__row">
+            <label class="check">
+              <input type="checkbox" />
+              <span>Lembrar-me</span>
+            </label>
+          </div>
+
+          <p class="form-feedback" data-login-feedback aria-live="polite"></p>
+
+          <button class="primary-button" type="submit">Entrar</button>
+
+          <div class="divider" aria-hidden="true">
+            <span></span>
+            <small>Ou</small>
+            <span></span>
+          </div>
+
+          <a class="secondary-button" href="acesso-funcionario.html">
+            <span class="secondary-button__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M8 5.5h8M8 9.5h8M8 13.5h5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+                <rect x="6" y="4" width="12" height="16" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.8" />
+              </svg>
+            </span>
+            Acessar com código (Funcionário)
+          </a>
+        </form>
+
+        <footer class="login-footer">
+          <p>Ao entrar, você concorda com nossos</p>
+          <div>
+            <button class="text-link" type="button">Termos de Serviço</button>
+            <span>e</span>
+            <button class="text-link" type="button">Política de Privacidade</button>
+          </div>
+        </footer>
+      </section>
+
+      <section class="feature-panel" aria-label="Destaques da plataforma">
+        <div class="feature-panel__inner">
+          <div class="hero-card" aria-hidden="true">
+            <svg viewBox="0 0 320 240" role="presentation">
+              <defs>
+                <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#8dc7ff" stop-opacity="0.82" />
+                </linearGradient>
+              </defs>
+              <rect x="0" y="0" width="320" height="240" rx="24" fill="#eff8ff" />
+              <ellipse cx="160" cy="170" rx="116" ry="20" fill="#d6ecff" />
+              <g fill="url(#glow)">
+                <circle cx="160" cy="84" r="18" />
+                <rect x="146" y="104" width="28" height="74" rx="14" />
+                <circle cx="92" cy="112" r="12" />
+                <rect x="82" y="126" width="20" height="48" rx="10" />
+                <circle cx="122" cy="104" r="13" />
+                <rect x="111" y="119" width="22" height="56" rx="11" />
+                <circle cx="208" cy="103" r="13" />
+                <rect x="197" y="118" width="22" height="58" rx="11" />
+                <circle cx="238" cy="111" r="12" />
+                <rect x="228" y="126" width="20" height="48" rx="10" />
+                <circle cx="62" cy="124" r="10" />
+                <rect x="54" y="136" width="16" height="40" rx="8" />
+                <circle cx="268" cy="124" r="10" />
+                <rect x="260" y="136" width="16" height="40" rx="8" />
+              </g>
+              <g fill="#3d96ea" opacity="0.9">
+                <circle cx="194" cy="112" r="12" />
+                <rect x="184" y="126" width="20" height="48" rx="10" />
+              </g>
+            </svg>
+          </div>
+
+          <div class="feature-copy">
+            <h2>Mapeie e previna riscos psicossociais</h2>
+            <p>
+              Plataforma completa para avaliação, diagnóstico e criação de planos de ação voltados à saúde mental no ambiente de trabalho
+            </p>
+          </div>
+
+          <div class="feature-highlights">
+            <span class="feature-pill">Conformidade NR01/NR17</span>
+            <span class="feature-pill">Dados Anonimizados</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="api-client.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

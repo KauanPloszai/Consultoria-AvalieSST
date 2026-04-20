@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AvaliESST | Acesso do Funcionário</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="employee-access-body">
+    <main class="employee-access-shell">
+      <section class="employee-access-hero">
+        <img class="employee-access-logo" src="img/logo.png" alt="AvalieSST" />
+        <h1>Avaliação Psicossocial</h1>
+        <p>
+          Participe da pesquisa para nos ajudar a construir um ambiente de trabalho
+          mais seguro e saudável.
+        </p>
+      </section>
+
+      <section class="employee-access-card" aria-label="Código de acesso">
+        <div class="employee-access-badge">
+          <svg viewBox="0 0 24 24" role="presentation">
+            <path d="M12 4.5 18 7v5.2c0 3.5-2.2 6.7-6 8.3-3.8-1.6-6-4.8-6-8.3V7l6-2.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8" />
+          </svg>
+          <span>100% ANÔNIMO E SEGURO</span>
+        </div>
+
+        <form class="employee-code-form" novalidate>
+          <label class="employee-code-field">
+            <span>Insira seu código de acesso único</span>
+            <input
+              id="employeeAccessCode"
+              name="employeeAccessCode"
+              type="text"
+              placeholder="EX: X7B9-A24K"
+            />
+          </label>
+
+          <p class="employee-code-help">O código foi enviado pelo seu gestor ou RH</p>
+          <p class="employee-code-feedback" data-employee-code-feedback aria-live="polite"></p>
+
+          <button class="employee-code-button" type="submit">
+            <span>Iniciar Questionário</span>
+            <svg viewBox="0 0 24 24" role="presentation">
+              <path d="M5 12h14m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" />
+            </svg>
+          </button>
+        </form>
+
+        <div class="employee-access-note">
+          <svg viewBox="0 0 24 24" role="presentation">
+            <path d="M8.5 10V8a3.5 3.5 0 1 1 7 0v2M7 10h10v8H7z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8" />
+          </svg>
+          <p>
+            Suas respostas são confidenciais. A empresa recebe apenas relatórios
+            agregados, impossibilitando a identificação individual de qualquer
+            participante.
+          </p>
+        </div>
+      </section>
+
+      <section class="employee-benefits" aria-label="Motivos para participar">
+        <h2>Por que participar?</h2>
+
+        <div class="employee-benefits-grid">
+          <article class="employee-benefit-card">
+            <span class="employee-benefit-icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M12 4.5 18 7v5.2c0 3.5-2.2 6.7-6 8.3-3.8-1.6-6-4.8-6-8.3V7l6-2.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8" />
+                <path d="m9.5 12.5 1.8 1.8 3.2-3.8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+              </svg>
+            </span>
+            <div>
+              <h3>Garantia de Anonimato</h3>
+              <p>O sistema desvincula seu código das suas respostas automaticamente antes de gerar os resultados.</p>
+            </div>
+          </article>
+
+          <article class="employee-benefit-card">
+            <span class="employee-benefit-icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M6 11.5 18 7v9L6 12.5V7.8a1.8 1.8 0 0 1 2.6-1.6L11 7.4" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8" />
+                <path d="M10 12v2.5a2.5 2.5 0 0 0 5 0V13" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+              </svg>
+            </span>
+            <div>
+              <h3>Voz Ativa</h3>
+              <p>Sua percepção sobre o ambiente de trabalho ajuda a guiar melhorias reais na sua rotina.</p>
+            </div>
+          </article>
+
+          <article class="employee-benefit-card">
+            <span class="employee-benefit-icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M6.5 16.5h11M6.5 12.5h5l2-5 2 9 1.5-4h.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+              </svg>
+            </span>
+            <div>
+              <h3>Ações Direcionadas</h3>
+              <p>Os dados agregados geram planos de ação focados em saúde mental e segurança psicológica.</p>
+            </div>
+          </article>
+
+          <article class="employee-benefit-card">
+            <span class="employee-benefit-icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                <path d="M12 8.5v4l2.5 1.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+              </svg>
+            </span>
+            <div>
+              <h3>Rápido e Simples</h3>
+              <p>O questionário leva em média 10-15 minutos para ser concluído e pode ser feito pelo celular.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script src="api-client.js?v=20260420"></script>
+    <script src="employee-access.js?v=20260420"></script>
+  </body>
+</html>

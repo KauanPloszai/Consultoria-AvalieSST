@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AvaliESST | Questionario do Funcionario</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="employee-questionnaire-body">
+    <main class="employee-questionnaire-shell" data-questionnaire-app>
+      <header class="employee-questionnaire-topbar" data-questionnaire-topbar>
+        <img class="employee-questionnaire-logo" src="img/logo.png" alt="AvalieSST" />
+
+        <div class="employee-questionnaire-progress-wrap">
+          <div class="employee-questionnaire-progress-head">
+            <span data-questionnaire-step-label>Passo 1 de 3</span>
+            <strong data-questionnaire-progress-label>33%</strong>
+          </div>
+          <div class="employee-questionnaire-progress-bar" aria-hidden="true">
+            <span data-questionnaire-progress-fill></span>
+          </div>
+        </div>
+
+        <a class="employee-questionnaire-exit" href="acesso-funcionario.html" data-questionnaire-exit>Sair</a>
+      </header>
+
+      <section class="employee-questionnaire-panel" data-questionnaire-panel>
+        <p class="employee-questionnaire-feedback" data-questionnaire-feedback aria-live="polite"></p>
+        <div data-questionnaire-content></div>
+      </section>
+
+      <footer class="employee-questionnaire-footer" data-questionnaire-footer>
+        <button class="employee-questionnaire-button employee-questionnaire-button--ghost" type="button" data-questionnaire-back>
+          <span aria-hidden="true">&larr;</span>
+          <span>Voltar</span>
+        </button>
+
+        <button class="employee-questionnaire-button employee-questionnaire-button--primary" type="button" data-questionnaire-next>
+          <span data-questionnaire-next-label>Proximo</span>
+          <span aria-hidden="true">&rarr;</span>
+        </button>
+      </footer>
+    </main>
+
+    <script src="api-client.js?v=20260420"></script>
+    <script src="employee-questionnaire.js?v=20260420"></script>
+  </body>
+</html>

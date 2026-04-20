@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AvaliESST | Setores e Função</title>
+    <link rel="stylesheet" href="dashboard.css" />
+  </head>
+  <body class="dashboard-body">
+    <header class="app-header">
+      <div class="app-header__brand">
+        <img class="app-header__logo" src="img/logo.png" alt="AvalieSST" />
+      </div>
+
+      <div class="app-header__title">
+        <span>Setores e função</span>
+        <h1>Gestão de Empresas</h1>
+      </div>
+
+      <div class="app-header__actions">
+        <button class="header-action" type="button">
+          <svg viewBox="0 0 24 24" role="presentation">
+            <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+          </svg>
+          Novo Setor/Função
+        </button>
+      </div>
+    </header>
+
+    <div class="header-divider"></div>
+
+    <main class="dashboard-shell">
+      <aside class="sidebar">
+        <nav class="sidebar__nav" aria-label="Menu principal">
+          <a class="sidebar-link" href="dashboard.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8" />
+                <path d="M5.8 18a6.2 6.2 0 0 1 12.4 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+              </svg>
+            </span>
+            <span>Admin</span>
+          </a>
+
+          <a class="sidebar-link sidebar-link--active" href="setores-funcao.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="8" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
+                <circle cx="16" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.6" />
+                <path d="M4.5 17.5a3.5 3.5 0 0 1 7 0m1-1.3a3 3 0 0 1 5.5 1.3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+              </svg>
+            </span>
+            <span>Setores e Função</span>
+          </a>
+
+          <a class="sidebar-link" href="formularios.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M8 5.5h8M8 9.5h8M8 13.5h5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+                <rect x="6" y="4" width="12" height="16" rx="2.1" fill="none" stroke="currentColor" stroke-width="1.7" />
+              </svg>
+            </span>
+            <span>Formulários</span>
+          </a>
+
+          <a class="sidebar-link" href="relatorios.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M7 6.5h10M7 10.5h10M7 14.5h6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+                <path d="M6.5 4h7L18 8.5V18a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
+              </svg>
+            </span>
+            <span>Relatórios</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__footer">
+          <div class="user-chip">
+            <div class="user-chip__avatar">A</div>
+            <div class="user-chip__meta">
+              <strong>Admin Principal</strong>
+              <span data-user-email>admin@avaliiesst.com</span>
+            </div>
+          </div>
+          <button class="logout-button" type="button" data-logout aria-label="Sair">
+            <svg viewBox="0 0 24 24" role="presentation">
+              <path d="M10 7H7.5A1.5 1.5 0 0 0 6 8.5v7A1.5 1.5 0 0 0 7.5 17H10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+              <path d="m13 15 3-3-3-3M16 12H9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <section class="dashboard-main">
+        <section class="sector-stats-grid">
+          <article class="sector-stat-card">
+            <span class="sector-stat-card__label">Total de Setores</span>
+            <div class="sector-stat-card__footer">
+              <strong>142</strong>
+              <span>2 novos</span>
+            </div>
+          </article>
+
+          <article class="sector-stat-card">
+            <span class="sector-stat-card__label">Total de Setores</span>
+            <div class="sector-stat-card__footer">
+              <strong>142</strong>
+              <span>2 novos</span>
+            </div>
+          </article>
+
+          <article class="sector-stat-card">
+            <span class="sector-stat-card__label">Total de Setores</span>
+            <div class="sector-stat-card__footer">
+              <strong>142</strong>
+              <span>2 novos</span>
+            </div>
+          </article>
+
+          <article class="sector-stat-card">
+            <span class="sector-stat-card__label">Total de Setores</span>
+            <div class="sector-stat-card__footer">
+              <strong>142</strong>
+              <span>2 novos</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="org-card">
+          <div class="org-card__titlebar">
+            <h2>Estrutura Organizacional</h2>
+          </div>
+
+          <div class="org-table">
+            <div class="org-table__head">
+              <span>Setor / Função</span>
+              <span>Colaboradores</span>
+              <span>Riscos Identificados</span>
+              <span>Ações</span>
+            </div>
+
+            <div class="org-group org-group--single">
+              <article class="org-row org-row--parent">
+                <div class="org-row__name">
+                  <button class="org-chevron" type="button" aria-label="Expandir">
+                    <svg viewBox="0 0 24 24" role="presentation">
+                      <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                    </svg>
+                  </button>
+                  <span class="org-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="presentation">
+                      <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
+                    </svg>
+                  </span>
+                  <strong>Diretoria Executiva</strong>
+                </div>
+                <span class="org-count">4</span>
+                <div class="org-tags">
+                  <span class="org-tag org-tag--neutral">Psico</span>
+                </div>
+                <button class="org-menu-button" type="button" aria-label="Mais ações">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <circle cx="12" cy="6" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="18" r="1.6" fill="currentColor" />
+                  </svg>
+                </button>
+              </article>
+
+              <article class="org-row org-row--child">
+                <div class="org-row__name org-row__name--child">
+                  <span class="org-tree-line" aria-hidden="true"></span>
+                  <span class="org-child-label">Diretor Geral (SEO)</span>
+                </div>
+                <span class="org-count">1</span>
+                <div class="org-tags">
+                  <span class="org-tag org-tag--violet">Psicossocial</span>
+                </div>
+                <button class="org-edit-button" type="button" aria-label="Editar item">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <path d="m4 16.5 9.8-9.8a2.1 2.1 0 1 1 3 3L7 19.5 4 20l.5-3.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
+                  </svg>
+                </button>
+              </article>
+
+              <article class="org-row org-row--child">
+                <div class="org-row__name org-row__name--child">
+                  <span class="org-tree-line" aria-hidden="true"></span>
+                  <span class="org-child-label">Diretor Financeiro (SFO)</span>
+                </div>
+                <span class="org-count">1</span>
+                <div class="org-tags">
+                  <span class="org-tag org-tag--violet">Psicossocial</span>
+                  <span class="org-tag org-tag--yellow">Ergo</span>
+                </div>
+                <button class="org-edit-button" type="button" aria-label="Editar item">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <path d="m4 16.5 9.8-9.8a2.1 2.1 0 1 1 3 3L7 19.5 4 20l.5-3.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
+                  </svg>
+                </button>
+              </article>
+            </div>
+
+            <div class="org-group">
+              <article class="org-row org-row--parent">
+                <div class="org-row__name">
+                  <button class="org-chevron" type="button" aria-label="Expandir">
+                    <svg viewBox="0 0 24 24" role="presentation">
+                      <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                    </svg>
+                  </button>
+                  <span class="org-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="presentation">
+                      <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
+                    </svg>
+                  </span>
+                  <strong>Tecnologia da Informação</strong>
+                </div>
+                <span class="org-count">28</span>
+                <div class="org-tags">
+                  <span class="org-tag org-tag--neutral">Ergo, Psico</span>
+                </div>
+                <button class="org-menu-button" type="button" aria-label="Mais ações">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <circle cx="12" cy="6" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="18" r="1.6" fill="currentColor" />
+                  </svg>
+                </button>
+              </article>
+
+              <article class="org-row org-row--child">
+                <div class="org-row__name org-row__name--child">
+                  <button class="org-chevron org-chevron--inline" type="button" aria-label="Expandir setor">
+                    <svg viewBox="0 0 24 24" role="presentation">
+                      <path d="m10 8 4 4-4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                    </svg>
+                  </button>
+                  <span class="org-child-label org-child-label--sector">Desenvolvimento</span>
+                </div>
+                <span class="org-count">15</span>
+                <div class="org-tags"></div>
+                <button class="org-menu-button" type="button" aria-label="Mais ações">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <circle cx="12" cy="6" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="18" r="1.6" fill="currentColor" />
+                  </svg>
+                </button>
+              </article>
+            </div>
+
+            <div class="org-group">
+              <article class="org-row org-row--parent">
+                <div class="org-row__name">
+                  <button class="org-chevron org-chevron--collapsed" type="button" aria-label="Expandir">
+                    <svg viewBox="0 0 24 24" role="presentation">
+                      <path d="m10 8 4 4-4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                    </svg>
+                  </button>
+                  <span class="org-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="presentation">
+                      <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
+                    </svg>
+                  </span>
+                  <strong>Produção / Manufatura</strong>
+                </div>
+                <span class="org-count">120</span>
+                <div class="org-tags">
+                  <span class="org-tag org-tag--neutral">Físico, Químico</span>
+                </div>
+                <button class="org-menu-button" type="button" aria-label="Mais ações">
+                  <svg viewBox="0 0 24 24" role="presentation">
+                    <circle cx="12" cy="6" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+                    <circle cx="12" cy="18" r="1.6" fill="currentColor" />
+                  </svg>
+                </button>
+              </article>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="api-client.js"></script>
+    <script src="dashboard.js"></script>
+  </body>
+</html>

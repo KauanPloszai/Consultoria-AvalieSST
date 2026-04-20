@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AvaliESST | Nova Empresa</title>
+    <link rel="stylesheet" href="dashboard.css" />
+  </head>
+  <body class="dashboard-body">
+    <header class="app-header">
+      <div class="app-header__brand">
+        <img class="app-header__logo" src="img/logo.png" alt="AvalieSST" />
+      </div>
+
+      <div class="app-header__title">
+        <span>Admin &gt; Nova Empresa</span>
+        <h1>Gestao de Empresas</h1>
+      </div>
+    </header>
+
+    <div class="header-divider"></div>
+
+    <main class="dashboard-shell">
+      <aside class="sidebar">
+        <nav class="sidebar__nav" aria-label="Menu principal">
+          <a class="sidebar-link sidebar-link--active" href="dashboard.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8" />
+                <path d="M5.8 18a6.2 6.2 0 0 1 12.4 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+              </svg>
+            </span>
+            <span>Admin</span>
+          </a>
+
+          <a class="sidebar-link" href="setores-funcao.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="8" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
+                <circle cx="16" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.6" />
+                <path d="M4.5 17.5a3.5 3.5 0 0 1 7 0m1-1.3a3 3 0 0 1 5.5 1.3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+              </svg>
+            </span>
+            <span>Setores e Funcao</span>
+          </a>
+
+          <a class="sidebar-link" href="formularios.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M8 5.5h8M8 9.5h8M8 13.5h5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+                <rect x="6" y="4" width="12" height="16" rx="2.1" fill="none" stroke="currentColor" stroke-width="1.7" />
+              </svg>
+            </span>
+            <span>Formularios</span>
+          </a>
+
+          <a class="sidebar-link" href="relatorios.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M7 6.5h10M7 10.5h10M7 14.5h6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+                <path d="M6.5 4h7L18 8.5V18a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
+              </svg>
+            </span>
+            <span>Relatorios</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__footer">
+          <div class="user-chip">
+            <div class="user-chip__avatar">A</div>
+            <div class="user-chip__meta">
+              <strong>Admin Principal</strong>
+              <span data-user-email>admin@avaliiesst.com</span>
+            </div>
+          </div>
+          <button class="logout-button" type="button" data-logout aria-label="Sair">
+            <svg viewBox="0 0 24 24" role="presentation">
+              <path d="M10 7H7.5A1.5 1.5 0 0 0 6 8.5v7A1.5 1.5 0 0 0 7.5 17H10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+              <path d="m13 15 3-3-3-3M16 12H9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <section class="dashboard-main">
+        <section class="overview-grid">
+          <article class="overview-card">
+            <span class="overview-card__icon overview-card__icon--blue">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
+              </svg>
+            </span>
+            <div class="overview-card__copy">
+              <strong data-company-stat-total>0</strong>
+              <span>Total de Empresas</span>
+            </div>
+          </article>
+
+          <article class="overview-card">
+            <span class="overview-card__icon overview-card__icon--green">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="m7.5 12.5 3 3 6-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+              </svg>
+            </span>
+            <div class="overview-card__copy">
+              <strong data-company-stat-active>0</strong>
+              <span>Empresas Ativas</span>
+            </div>
+          </article>
+
+          <article class="overview-card">
+            <span class="overview-card__icon overview-card__icon--red">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8" />
+                <path d="M8 8l8 8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+              </svg>
+            </span>
+            <div class="overview-card__copy">
+              <strong data-company-stat-inactive>0</strong>
+              <span>Empresas Inativas</span>
+            </div>
+          </article>
+
+          <article class="overview-card">
+            <span class="overview-card__icon overview-card__icon--violet">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="8" cy="9" r="2.2" fill="none" stroke="currentColor" stroke-width="1.7" />
+                <circle cx="16" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.7" />
+                <path d="M4.6 17.5a3.4 3.4 0 0 1 6.8 0m1.2-1.2a3 3 0 0 1 5.4 1.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+              </svg>
+            </span>
+            <div class="overview-card__copy">
+              <strong data-company-stat-employees>0</strong>
+              <span>Total de Funcionarios</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="companies-panel">
+          <div class="companies-toolbar">
+            <div class="companies-toolbar__left">
+              <label class="search-field">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <circle cx="11" cy="11" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                  <path d="m15.5 15.5 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+                </svg>
+                <input type="text" placeholder="Buscar por nome ou CNPJ..." data-company-search />
+              </label>
+              <button class="toolbar-primary" type="button" data-open-company-modal>
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+                </svg>
+                Nova Empresa
+              </button>
+            </div>
+
+            <div class="companies-toolbar__right">
+              <select class="toolbar-select" data-company-status-filter>
+                <option value="all">Status: Todos</option>
+                <option value="active">Status: Ativo</option>
+                <option value="inactive">Status: Inativo</option>
+              </select>
+              <select class="toolbar-select" data-company-sector-filter>
+                <option value="all">Setor: Todos</option>
+              </select>
+              <button class="toolbar-refresh" type="button" aria-label="Atualizar" data-company-refresh>
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path d="M18 10a6 6 0 1 0 1.2 5.2M18 10V5.8m0 4.2h-4.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="company-table">
+            <div class="company-table__head">
+              <span><button class="table-check" type="button" aria-label="Selecionar todos" data-company-select-all></button></span>
+              <span>Empresa</span>
+              <span>CNPJ</span>
+              <span>Status</span>
+              <span>Setores</span>
+              <span>Funcionarios</span>
+              <span>Acoes</span>
+            </div>
+
+            <div class="company-table__body" data-company-table-body></div>
+          </div>
+
+          <div class="companies-footer">
+            <span data-company-results>Mostrando 0 a 0 de <strong>0</strong> resultados</span>
+            <div class="pagination" data-company-pagination>
+              <button type="button" disabled>Anterior</button>
+              <button class="is-active" type="button">1</button>
+              <button type="button" disabled>Proxima</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div class="form-modal" data-company-modal hidden>
+      <div class="form-modal__backdrop" data-close-company-modal></div>
+      <div class="form-modal__dialog company-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="companyModalTitle">
+        <div class="form-modal__header">
+          <div>
+            <span class="form-modal__eyebrow">Cadastro de Empresa</span>
+            <h2 id="companyModalTitle" data-company-modal-title>Nova Empresa</h2>
+          </div>
+          <button class="form-modal__close" type="button" data-close-company-modal aria-label="Fechar">
+            <svg viewBox="0 0 24 24" role="presentation">
+              <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+            </svg>
+          </button>
+        </div>
+
+        <form class="company-builder" data-company-builder novalidate>
+          <div class="company-builder__grid">
+            <label class="company-builder__field company-builder__field--wide">
+              <span>Nome da empresa</span>
+              <input type="text" name="companyName" placeholder="Ex.: Tech Brasil" data-company-name />
+            </label>
+
+            <label class="company-builder__field">
+              <span>CNPJ</span>
+              <input type="text" name="companyCnpj" placeholder="12.345.678/0001-90" data-company-cnpj />
+            </label>
+
+            <label class="company-builder__field">
+              <span>Status</span>
+              <select name="companyStatus" data-company-status>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+            </label>
+
+            <label class="company-builder__field company-builder__field--wide">
+              <span>Setores</span>
+              <input
+                type="text"
+                name="companySectors"
+                placeholder="Separe por virgula. Ex.: Tecnologia, Software"
+                data-company-sectors
+              />
+            </label>
+
+            <label class="company-builder__field">
+              <span>Quantidade de funcionarios</span>
+              <input type="number" name="companyEmployees" min="1" step="1" placeholder="24" data-company-employees />
+            </label>
+          </div>
+
+          <p class="form-builder__feedback" data-company-feedback aria-live="polite"></p>
+
+          <div class="form-builder__actions">
+            <button class="form-builder__ghost" type="button" data-close-company-modal>Cancelar</button>
+            <button class="form-builder__primary" type="submit">Salvar empresa</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script src="dashboard.js"></script>
+    <script src="nova-empresa.js"></script>
+  </body>
+</html>
