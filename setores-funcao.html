@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AvaliESST | Setores e Função</title>
-    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="dashboard.css?v=20260421u5" />
   </head>
   <body class="dashboard-body">
     <header class="app-header">
@@ -18,7 +18,7 @@
       </div>
 
       <div class="app-header__actions">
-        <button class="header-action" type="button">
+        <button class="header-action" type="button" data-open-structure-modal>
           <svg viewBox="0 0 24 24" role="presentation">
             <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
           </svg>
@@ -92,36 +92,48 @@
       </aside>
 
       <section class="dashboard-main">
+        <section class="filters-panel structure-toolbar">
+          <div class="filters-grid filters-grid--structure">
+            <label class="filter-field">
+              <span>Empresa</span>
+              <select data-structure-company></select>
+            </label>
+            <div class="filters-action filters-action--wide">
+              <span class="structure-toolbar__meta" data-structure-active-form>Nenhum formulário vinculado.</span>
+            </div>
+          </div>
+        </section>
+
         <section class="sector-stats-grid">
           <article class="sector-stat-card">
             <span class="sector-stat-card__label">Total de Setores</span>
             <div class="sector-stat-card__footer">
-              <strong>142</strong>
-              <span>2 novos</span>
+              <strong data-structure-stat-sectors>0</strong>
+              <span>ativos</span>
             </div>
           </article>
 
           <article class="sector-stat-card">
-            <span class="sector-stat-card__label">Total de Setores</span>
+            <span class="sector-stat-card__label">Total de Funções</span>
             <div class="sector-stat-card__footer">
-              <strong>142</strong>
-              <span>2 novos</span>
+              <strong data-structure-stat-functions>0</strong>
+              <span>cadastradas</span>
             </div>
           </article>
 
           <article class="sector-stat-card">
-            <span class="sector-stat-card__label">Total de Setores</span>
+            <span class="sector-stat-card__label">Funcionários Mapeados</span>
             <div class="sector-stat-card__footer">
-              <strong>142</strong>
-              <span>2 novos</span>
+              <strong data-structure-stat-employees>0</strong>
+              <span>estrutura atual</span>
             </div>
           </article>
 
           <article class="sector-stat-card">
-            <span class="sector-stat-card__label">Total de Setores</span>
+            <span class="sector-stat-card__label">Empresa Selecionada</span>
             <div class="sector-stat-card__footer">
-              <strong>142</strong>
-              <span>2 novos</span>
+              <strong data-structure-stat-company>--</strong>
+              <span>estrutura ativa</span>
             </div>
           </article>
         </section>
@@ -131,159 +143,79 @@
             <h2>Estrutura Organizacional</h2>
           </div>
 
-          <div class="org-table">
+          <div class="org-table" data-structure-table>
             <div class="org-table__head">
               <span>Setor / Função</span>
               <span>Colaboradores</span>
               <span>Riscos Identificados</span>
               <span>Ações</span>
             </div>
-
-            <div class="org-group org-group--single">
-              <article class="org-row org-row--parent">
-                <div class="org-row__name">
-                  <button class="org-chevron" type="button" aria-label="Expandir">
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                    </svg>
-                  </button>
-                  <span class="org-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
-                    </svg>
-                  </span>
-                  <strong>Diretoria Executiva</strong>
-                </div>
-                <span class="org-count">4</span>
-                <div class="org-tags">
-                  <span class="org-tag org-tag--neutral">Psico</span>
-                </div>
-                <button class="org-menu-button" type="button" aria-label="Mais ações">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <circle cx="12" cy="6" r="1.6" fill="currentColor" />
-                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
-                    <circle cx="12" cy="18" r="1.6" fill="currentColor" />
-                  </svg>
-                </button>
-              </article>
-
-              <article class="org-row org-row--child">
-                <div class="org-row__name org-row__name--child">
-                  <span class="org-tree-line" aria-hidden="true"></span>
-                  <span class="org-child-label">Diretor Geral (SEO)</span>
-                </div>
-                <span class="org-count">1</span>
-                <div class="org-tags">
-                  <span class="org-tag org-tag--violet">Psicossocial</span>
-                </div>
-                <button class="org-edit-button" type="button" aria-label="Editar item">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <path d="m4 16.5 9.8-9.8a2.1 2.1 0 1 1 3 3L7 19.5 4 20l.5-3.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
-                  </svg>
-                </button>
-              </article>
-
-              <article class="org-row org-row--child">
-                <div class="org-row__name org-row__name--child">
-                  <span class="org-tree-line" aria-hidden="true"></span>
-                  <span class="org-child-label">Diretor Financeiro (SFO)</span>
-                </div>
-                <span class="org-count">1</span>
-                <div class="org-tags">
-                  <span class="org-tag org-tag--violet">Psicossocial</span>
-                  <span class="org-tag org-tag--yellow">Ergo</span>
-                </div>
-                <button class="org-edit-button" type="button" aria-label="Editar item">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <path d="m4 16.5 9.8-9.8a2.1 2.1 0 1 1 3 3L7 19.5 4 20l.5-3.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
-                  </svg>
-                </button>
-              </article>
-            </div>
-
-            <div class="org-group">
-              <article class="org-row org-row--parent">
-                <div class="org-row__name">
-                  <button class="org-chevron" type="button" aria-label="Expandir">
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                    </svg>
-                  </button>
-                  <span class="org-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
-                    </svg>
-                  </span>
-                  <strong>Tecnologia da Informação</strong>
-                </div>
-                <span class="org-count">28</span>
-                <div class="org-tags">
-                  <span class="org-tag org-tag--neutral">Ergo, Psico</span>
-                </div>
-                <button class="org-menu-button" type="button" aria-label="Mais ações">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <circle cx="12" cy="6" r="1.6" fill="currentColor" />
-                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
-                    <circle cx="12" cy="18" r="1.6" fill="currentColor" />
-                  </svg>
-                </button>
-              </article>
-
-              <article class="org-row org-row--child">
-                <div class="org-row__name org-row__name--child">
-                  <button class="org-chevron org-chevron--inline" type="button" aria-label="Expandir setor">
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="m10 8 4 4-4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                    </svg>
-                  </button>
-                  <span class="org-child-label org-child-label--sector">Desenvolvimento</span>
-                </div>
-                <span class="org-count">15</span>
-                <div class="org-tags"></div>
-                <button class="org-menu-button" type="button" aria-label="Mais ações">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <circle cx="12" cy="6" r="1.6" fill="currentColor" />
-                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
-                    <circle cx="12" cy="18" r="1.6" fill="currentColor" />
-                  </svg>
-                </button>
-              </article>
-            </div>
-
-            <div class="org-group">
-              <article class="org-row org-row--parent">
-                <div class="org-row__name">
-                  <button class="org-chevron org-chevron--collapsed" type="button" aria-label="Expandir">
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="m10 8 4 4-4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                    </svg>
-                  </button>
-                  <span class="org-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
-                    </svg>
-                  </span>
-                  <strong>Produção / Manufatura</strong>
-                </div>
-                <span class="org-count">120</span>
-                <div class="org-tags">
-                  <span class="org-tag org-tag--neutral">Físico, Químico</span>
-                </div>
-                <button class="org-menu-button" type="button" aria-label="Mais ações">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <circle cx="12" cy="6" r="1.6" fill="currentColor" />
-                    <circle cx="12" cy="12" r="1.6" fill="currentColor" />
-                    <circle cx="12" cy="18" r="1.6" fill="currentColor" />
-                  </svg>
-                </button>
-              </article>
-            </div>
           </div>
         </section>
       </section>
     </main>
 
-    <script src="api-client.js"></script>
-    <script src="dashboard.js"></script>
+    <div class="form-modal" data-structure-modal hidden>
+      <div class="form-modal__backdrop" data-close-structure-modal></div>
+      <div class="form-modal__dialog company-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="structureModalTitle">
+        <div class="form-modal__header">
+          <div>
+            <span class="form-modal__eyebrow">Estrutura Organizacional</span>
+            <h2 id="structureModalTitle" data-structure-modal-title>Novo Setor</h2>
+          </div>
+          <button class="form-modal__close" type="button" data-close-structure-modal aria-label="Fechar">
+            <svg viewBox="0 0 24 24" role="presentation">
+              <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+            </svg>
+          </button>
+        </div>
+
+        <form class="company-builder" data-structure-builder novalidate>
+          <div class="company-builder__grid">
+            <label class="company-builder__field">
+              <span>Tipo</span>
+              <select data-structure-type>
+                <option value="sector">Setor</option>
+                <option value="function">Função</option>
+              </select>
+            </label>
+
+            <label class="company-builder__field">
+              <span>Empresa</span>
+              <select data-structure-company-modal></select>
+            </label>
+
+            <label class="company-builder__field">
+              <span>Setor vinculado</span>
+              <select data-structure-sector-select></select>
+            </label>
+
+            <label class="company-builder__field company-builder__field--wide">
+              <span>Nome</span>
+              <input type="text" data-structure-name />
+            </label>
+
+            <label class="company-builder__field">
+              <span>Colaboradores</span>
+              <input type="number" min="0" step="1" data-structure-employees />
+            </label>
+          </div>
+
+          <p class="form-builder__feedback" data-structure-feedback aria-live="polite"></p>
+
+          <div class="form-builder__actions">
+            <button class="form-builder__ghost" type="button" data-delete-structure-item>Excluir</button>
+            <div class="form-builder__actions-group">
+              <button class="form-builder__ghost" type="button" data-close-structure-modal>Cancelar</button>
+              <button class="form-builder__primary" type="submit">Salvar item</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="api-client.js?v=20260421u4"></script>
+    <script src="dashboard.js?v=20260421ort1"></script>
+    <script src="setores-funcao.js?v=20260421ort1"></script>
   </body>
 </html>

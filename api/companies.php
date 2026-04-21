@@ -4,15 +4,33 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-require_auth();
-
-function fetch_companies(PDO $pdo): array
+function fetch_companies(PDO $pdo, ?int $companyFilterId = null): array
 {
-    $companiesStatement = $pdo->query(
-        'SELECT id, name, cnpj, status, employees_count
-         FROM companies
-         ORDER BY created_at DESC, id DESC'
-    );
+    if ($companyFilterId !== null && $companyFilterId > 0) {
+        $companiesStatement = $pdo->prepare(
+            'SELECT c.id, c.name, c.cnpj, c.status, c.employees_count,
+                    c.active_form_id,
+                    f.public_code AS active_form_code,
+                    f.name AS active_form_name
+             FROM companies
+             c
+             LEFT JOIN forms f ON f.id = c.active_form_id
+             WHERE c.id = :company_id
+             ORDER BY c.created_at DESC, c.id DESC'
+        );
+        $companiesStatement->execute(['company_id' => $companyFilterId]);
+    } else {
+        $companiesStatement = $pdo->query(
+            'SELECT c.id, c.name, c.cnpj, c.status, c.employees_count,
+                    c.active_form_id,
+                    f.public_code AS active_form_code,
+                    f.name AS active_form_name
+             FROM companies
+             c
+             LEFT JOIN forms f ON f.id = c.active_form_id
+             ORDER BY c.created_at DESC, c.id DESC'
+        );
+    }
 
     $companies = [];
     $companyIds = [];
@@ -26,7 +44,11 @@ function fetch_companies(PDO $pdo): array
             'cnpj' => (string) $row['cnpj'],
             'status' => normalize_status((string) $row['status']),
             'employees' => (int) $row['employees_count'],
+            'activeFormId' => $row['active_form_id'] !== null ? (int) $row['active_form_id'] : null,
+            'activeFormCode' => (string) ($row['active_form_code'] ?? ''),
+            'activeFormName' => (string) ($row['active_form_name'] ?? ''),
             'sectors' => [],
+            'linkedForms' => [],
         ];
     }
 
@@ -49,6 +71,34 @@ function fetch_companies(PDO $pdo): array
 
             $companies[$companyId]['sectors'][] = (string) $sectorRow['sector_name'];
         }
+
+        $formsStatement = $pdo->prepare(
+            "SELECT l.company_id, f.id AS form_id, f.public_code, f.name, f.status
+             FROM company_form_links l
+             INNER JOIN forms f ON f.id = l.form_id
+             WHERE l.company_id IN ($placeholders)
+             ORDER BY f.name ASC, f.id ASC"
+        );
+        $formsStatement->execute($companyIds);
+
+        foreach ($formsStatement->fetchAll() as $formRow) {
+            $companyId = (int) $formRow['company_id'];
+
+            if (!isset($companies[$companyId])) {
+                continue;
+            }
+
+            $companies[$companyId]['linkedForms'][] = [
+                'id' => (int) $formRow['form_id'],
+                'publicCode' => (string) ($formRow['public_code'] ?? ''),
+                'name' => (string) $formRow['name'],
+                'status' => normalize_status((string) ($formRow['status'] ?? 'inactive')),
+            ];
+        }
+    }
+
+    foreach ($companies as $companyId => $company) {
+        $companies[$companyId]['linkedFormsCount'] = count($company['linkedForms']);
     }
 
     return array_values($companies);
@@ -61,6 +111,7 @@ function parse_company_payload(array $input): array
     $status = normalize_status((string) ($input['status'] ?? 'active'));
     $employees = max(1, (int) ($input['employees'] ?? 0));
     $sectors = normalize_string_list(is_array($input['sectors'] ?? null) ? $input['sectors'] : []);
+    $activeFormId = (int) ($input['activeFormId'] ?? 0);
 
     if ($name === '') {
         send_json(422, [
@@ -89,6 +140,7 @@ function parse_company_payload(array $input): array
         'status' => $status,
         'employees' => $employees,
         'sectors' => $sectors,
+        'activeFormId' => $activeFormId > 0 ? $activeFormId : null,
     ];
 }
 
@@ -110,15 +162,37 @@ function replace_company_sectors(PDO $pdo, int $companyId, array $sectors): void
     }
 }
 
-$method = request_method();
-$pdo = db();
+function sync_company_form_link(PDO $pdo, int $companyId, ?int $activeFormId): void
+{
+    if ($activeFormId === null || $activeFormId <= 0) {
+        return;
+    }
 
-if ($method === 'GET') {
-    send_json(200, [
-        'success' => true,
-        'data' => fetch_companies($pdo),
+    $statement = $pdo->prepare(
+        'INSERT INTO company_form_links (company_id, form_id)
+         VALUES (:company_id, :form_id)
+         ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP'
+    );
+    $statement->execute([
+        'company_id' => $companyId,
+        'form_id' => $activeFormId,
     ]);
 }
+
+$method = request_method();
+$pdo = db();
+$user = require_role(['admin', 'company']);
+
+if ($method === 'GET') {
+    $companyFilterId = resolve_company_scope_filter($user);
+
+    send_json(200, [
+        'success' => true,
+        'data' => fetch_companies($pdo, $companyFilterId),
+    ]);
+}
+
+require_admin();
 
 $input = read_json_input();
 $payload = parse_company_payload($input);
@@ -128,18 +202,20 @@ if ($method === 'POST') {
 
     try {
         $insertStatement = $pdo->prepare(
-            'INSERT INTO companies (name, cnpj, status, employees_count)
-             VALUES (:name, :cnpj, :status, :employees_count)'
+            'INSERT INTO companies (name, cnpj, status, employees_count, active_form_id)
+             VALUES (:name, :cnpj, :status, :employees_count, :active_form_id)'
         );
         $insertStatement->execute([
             'name' => $payload['name'],
             'cnpj' => $payload['cnpj'],
             'status' => $payload['status'],
             'employees_count' => $payload['employees'],
+            'active_form_id' => $payload['activeFormId'],
         ]);
 
         $companyId = (int) $pdo->lastInsertId();
         replace_company_sectors($pdo, $companyId, $payload['sectors']);
+        sync_company_form_link($pdo, $companyId, $payload['activeFormId']);
         $pdo->commit();
     } catch (Throwable $throwable) {
         if ($pdo->inTransaction()) {
@@ -178,6 +254,7 @@ if ($method === 'PUT') {
                  cnpj = :cnpj,
                  status = :status,
                  employees_count = :employees_count,
+                 active_form_id = :active_form_id,
                  updated_at = NOW()
              WHERE id = :id'
         );
@@ -187,6 +264,7 @@ if ($method === 'PUT') {
             'cnpj' => $payload['cnpj'],
             'status' => $payload['status'],
             'employees_count' => $payload['employees'],
+            'active_form_id' => $payload['activeFormId'],
         ]);
 
         if ($updateStatement->rowCount() === 0) {
@@ -199,6 +277,7 @@ if ($method === 'PUT') {
         }
 
         replace_company_sectors($pdo, $companyId, $payload['sectors']);
+        sync_company_form_link($pdo, $companyId, $payload['activeFormId']);
         $pdo->commit();
     } catch (Throwable $throwable) {
         if ($pdo->inTransaction()) {

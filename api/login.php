@@ -23,9 +23,20 @@ if ($email === '' || $password === '') {
 }
 
 $statement = db()->prepare(
-    'SELECT id, name, email, password_hash, password_salt, password_iterations, is_active
+    'SELECT u.id,
+            u.name,
+            u.email,
+            u.role,
+            u.company_id,
+            u.password_hash,
+            u.password_salt,
+            u.password_iterations,
+            u.is_active,
+            c.name AS company_name
      FROM users
-     WHERE email = :email
+     u
+     LEFT JOIN companies c ON c.id = u.company_id
+     WHERE u.email = :email
      LIMIT 1'
 );
 $statement->execute(['email' => $email]);
@@ -57,6 +68,9 @@ $_SESSION['user'] = [
     'id' => (int) $user['id'],
     'name' => (string) $user['name'],
     'email' => (string) $user['email'],
+    'role' => normalize_user_role((string) ($user['role'] ?? 'admin')),
+    'companyId' => $user['company_id'] !== null ? (int) $user['company_id'] : null,
+    'companyName' => (string) ($user['company_name'] ?? ''),
 ];
 
 send_json(200, [

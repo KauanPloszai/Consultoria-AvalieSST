@@ -3,18 +3,23 @@ const emailInput = document.querySelector("#email");
 const passwordInput = document.querySelector("#password");
 const loginFeedback = document.querySelector("[data-login-feedback]");
 
-const DASHBOARD_URL = "dashboard.html";
+const DEFAULT_DASHBOARD_URL = "dashboard.html";
+const COMPANY_DASHBOARD_URL = "geracao-acesso.html";
+
+function resolveHomeUrl(user) {
+  return user?.role === "company" ? COMPANY_DASHBOARD_URL : DEFAULT_DASHBOARD_URL;
+}
 
 if (loginFeedback && window.location.protocol === "file:") {
   loginFeedback.textContent =
-    "Esta tela precisa ser aberta por um servidor PHP local, por exemplo http://localhost/... e nao direto pelo arquivo index.html.";
+    "Esta tela precisa ser aberta por um servidor PHP local, por exemplo http://localhost/... e não direto pelo arquivo index.html.";
   loginFeedback.classList.remove("is-success");
 }
 
 async function redirectIfAuthenticated() {
   try {
-    await window.apiClient.get("api/session.php");
-    window.location.href = DASHBOARD_URL;
+    const response = await window.apiClient.get("api/session.php");
+    window.location.href = resolveHomeUrl(response.data || {});
   } catch (error) {
     return null;
   }
@@ -39,7 +44,7 @@ if (loginForm && emailInput && passwordInput && loginFeedback) {
       loginFeedback.textContent = "Validando acesso...";
       loginFeedback.classList.remove("is-success");
 
-      await window.apiClient.post("api/login.php", {
+      const response = await window.apiClient.post("api/login.php", {
         email,
         password,
       });
@@ -48,10 +53,10 @@ if (loginForm && emailInput && passwordInput && loginFeedback) {
       loginFeedback.classList.add("is-success");
 
       window.setTimeout(() => {
-        window.location.href = DASHBOARD_URL;
+        window.location.href = resolveHomeUrl(response.data || {});
       }, 250);
     } catch (error) {
-      loginFeedback.textContent = error.message || "Nao foi possivel entrar.";
+      loginFeedback.textContent = error.message || "Não foi possível entrar.";
       loginFeedback.classList.remove("is-success");
     }
   });

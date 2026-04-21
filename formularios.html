@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AvaliESST | Formulários</title>
-    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="dashboard.css?v=20260421u5" />
   </head>
   <body class="dashboard-body">
     <header class="app-header">
@@ -18,7 +18,7 @@
       </div>
 
       <div class="app-header__actions">
-        <button class="header-action header-action--light" type="button">
+        <button class="header-action header-action--light" type="button" data-open-link-modal aria-controls="companyFormLinkModal">
           <svg viewBox="0 0 24 24" role="presentation">
             <path d="M10 14 8 16a3 3 0 1 1-4.2-4.2l3-3A3 3 0 0 1 11 8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.9" />
             <path d="m14 10 2-2a3 3 0 0 1 4.2 4.2l-3 3A3 3 0 0 1 13 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.9" />
@@ -113,14 +113,7 @@
 
           <div class="companies-footer">
             <span data-forms-results>Mostrando <strong>0</strong> a <strong>0</strong> de <strong>0</strong> resultados</span>
-            <div class="pagination">
-              <button type="button">Anterior</button>
-              <button class="is-active" type="button">1</button>
-              <button type="button">2</button>
-              <button type="button">...</button>
-              <button type="button">15</button>
-              <button type="button">Próxima</button>
-            </div>
+            <div class="pagination" data-forms-pagination></div>
           </div>
         </section>
       </section>
@@ -142,16 +135,29 @@
         </div>
 
         <form class="form-builder" data-form-builder novalidate>
-          <label class="form-builder__field">
-            <span>Nome do formulário</span>
-            <input
-              id="formName"
-              name="formName"
-              type="text"
-              placeholder="Ex.: Avaliação de Sobrecarga Operacional"
-              data-form-name-input
-            />
-          </label>
+          <div class="company-builder__grid">
+            <label class="form-builder__field">
+              <span>Nome do formulário</span>
+              <input
+                id="formName"
+                name="formName"
+                type="text"
+                placeholder="Ex.: Avaliação de Sobrecarga Operacional"
+                data-form-name-input
+              />
+            </label>
+
+            <label class="form-builder__field">
+              <span>Status do formulário</span>
+              <select data-form-status-input>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+              <small class="form-builder__field-note">
+                Quando o formulário estiver inativo, os códigos e QR Codes das empresas vinculadas deixam de funcionar até ele ser reativado.
+              </small>
+            </label>
+          </div>
 
           <div class="form-builder__section">
             <div class="form-builder__section-head">
@@ -180,8 +186,85 @@
       </div>
     </div>
 
-    <script src="api-client.js"></script>
-    <script src="dashboard.js"></script>
-    <script src="formularios.js"></script>
+    <div class="form-modal" id="companyFormLinkModal" data-link-modal hidden>
+      <div class="form-modal__backdrop" data-close-link-modal></div>
+      <div class="form-modal__dialog company-link-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="linkModalTitle">
+        <div class="form-modal__header">
+          <div>
+            <span class="form-modal__eyebrow">Vínculo Empresa + Formulário</span>
+            <h2 id="linkModalTitle">Vincular Formulários</h2>
+          </div>
+          <button class="form-modal__close" type="button" data-close-link-modal aria-label="Fechar">
+            <svg viewBox="0 0 24 24" role="presentation">
+              <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+            </svg>
+          </button>
+        </div>
+
+        <form class="company-link-builder" data-company-link-builder novalidate>
+          <section class="form-builder__section company-link-section">
+            <div class="form-builder__section-head">
+              <div>
+                <h3>Configuração do vínculo</h3>
+                <p>Escolha a empresa e adicione um ou mais formulários. Cada formulário vinculado poderá gerar seu próprio QR Code e seu próprio código de acesso.</p>
+              </div>
+            </div>
+
+            <div class="company-link-builder__grid">
+              <label class="form-builder__field">
+                <span>Empresa</span>
+                <select data-link-company></select>
+              </label>
+
+              <label class="form-builder__field">
+                <span>Formulário para vincular</span>
+                <select data-link-form></select>
+              </label>
+            </div>
+          </section>
+
+          <section class="form-builder__section company-link-preview">
+            <div class="form-builder__section-head">
+              <div>
+                <h3>Formulários vinculados à empresa</h3>
+                <p>A empresa pode ter um ou vários formulários liberados ao mesmo tempo.</p>
+              </div>
+            </div>
+
+            <div class="question-item company-link-preview__card">
+              <strong data-link-current-company>Selecione uma empresa</strong>
+              <p data-link-current-form>Nenhum formulário vinculado no momento.</p>
+              <div class="company-link-selected-list" data-link-selected-list></div>
+            </div>
+          </section>
+
+          <section class="form-builder__section company-link-list">
+            <div class="form-builder__section-head company-link-list__head">
+              <div>
+                <h3>Empresas com formulários vinculados</h3>
+                <p>Abra a empresa para gerenciar os formulários liberados e depois gerar os acessos na tela de geração de acesso.</p>
+              </div>
+              <span data-link-list-count>0 empresa(s)</span>
+            </div>
+
+            <div class="company-link-list__body" data-link-list></div>
+          </section>
+
+          <p class="form-builder__feedback" data-company-link-feedback aria-live="polite"></p>
+
+          <div class="form-builder__actions">
+            <button class="form-builder__ghost" type="button" data-remove-link>Remover formulário selecionado</button>
+            <div class="form-builder__actions-group">
+              <button class="form-builder__ghost" type="button" data-close-link-modal>Cancelar</button>
+              <button class="form-builder__primary" type="submit">Salvar vínculo</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="api-client.js?v=20260421u2"></script>
+    <script src="dashboard.js?v=20260421ort1"></script>
+    <script src="formularios.js?v=20260421ort1"></script>
   </body>
 </html>

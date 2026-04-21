@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AvaliESST | Relatórios</title>
-    <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="dashboard.css?v=20260421u5" />
   </head>
   <body class="dashboard-body">
     <header class="app-header">
@@ -18,7 +18,7 @@
       </div>
 
       <div class="app-header__actions">
-        <button class="header-action header-action--light header-action--excel" type="button">
+        <button class="header-action header-action--light header-action--excel" type="button" data-report-export-excel>
           <svg viewBox="0 0 24 24" role="presentation">
             <path d="M8 4.5h6l3 3V18a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 18V6A1.5 1.5 0 0 1 8.5 4.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8" />
             <path d="M14 4.5V8h3" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8" />
@@ -26,7 +26,7 @@
           </svg>
           Exportar Excel
         </button>
-        <button class="header-action" type="button">
+        <button class="header-action" type="button" data-report-export-pdf>
           <svg viewBox="0 0 24 24" role="presentation">
             <path d="M8 4.5h6l3 3V18a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 18V6A1.5 1.5 0 0 1 8.5 4.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8" />
             <path d="M14 4.5V8h3" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8" />
@@ -109,28 +109,24 @@
             <div class="report-config-block">
               <label class="report-field">
                 <span>Empresa Selecionada</span>
-                <select class="report-select">
-                  <option>Tech Solutions S.A.</option>
-                </select>
+                <select class="report-select" data-report-company></select>
               </label>
 
               <label class="report-field">
                 <span>Período de Avaliação</span>
-                <select class="report-select">
-                  <option>1º Semestre 2023 (Jan - Jun)</option>
+                <select class="report-select" data-report-period>
+                  <option value="30">Últimos 30 dias</option>
+                  <option value="90">Últimos 90 dias</option>
+                  <option value="180" selected>Últimos 6 meses</option>
+                  <option value="365">Últimos 12 meses</option>
+                  <option value="all">Todo o histórico</option>
                 </select>
               </label>
             </div>
 
             <div class="report-config-block">
               <span class="report-group-label">Filtro de Setores</span>
-              <div class="report-checklist">
-                <label class="report-checkrow"><input type="checkbox" checked /> <span>Todos os Setores</span></label>
-                <label class="report-checkrow"><input type="checkbox" checked /> <span>Administrativo</span></label>
-                <label class="report-checkrow"><input type="checkbox" checked /> <span>Produção</span></label>
-                <label class="report-checkrow"><input type="checkbox" checked /> <span>TI &amp; Desenvolvimento</span></label>
-                <label class="report-checkrow"><input type="checkbox" checked /> <span>Atendimento</span></label>
-              </div>
+              <div class="report-checklist" data-report-sector-list></div>
             </div>
 
             <div class="report-config-block">
@@ -138,297 +134,44 @@
               <div class="report-toggle-list">
                 <label class="report-togglerow">
                   <span>Capa e Índice</span>
-                  <span class="report-switch"><input type="checkbox" checked /><i></i></span>
+                  <span class="report-switch"><input type="checkbox" checked data-report-section="cover" /><i></i></span>
                 </label>
                 <label class="report-togglerow">
-                  <span>Resumo Executivo (Gráficos)</span>
-                  <span class="report-switch"><input type="checkbox" checked /><i></i></span>
+                  <span>Resumo Executivo</span>
+                  <span class="report-switch"><input type="checkbox" checked data-report-section="summary" /><i></i></span>
                 </label>
                 <label class="report-togglerow">
-                  <span>Matriz de Risco (Heatmap)</span>
-                  <span class="report-switch"><input type="checkbox" checked /><i></i></span>
+                  <span>Análise por Setor</span>
+                  <span class="report-switch"><input type="checkbox" checked data-report-section="sectorAnalysis" /><i></i></span>
                 </label>
                 <label class="report-togglerow">
-                  <span>Plano de Ação Recomendado</span>
-                  <span class="report-switch"><input type="checkbox" checked /><i></i></span>
+                  <span>Matriz de Risco</span>
+                  <span class="report-switch"><input type="checkbox" checked data-report-section="heatmap" /><i></i></span>
                 </label>
                 <label class="report-togglerow">
-                  <span>Anexos Metodológicos</span>
-                  <span class="report-switch"><input type="checkbox" /><i></i></span>
+                  <span>Plano de Ação</span>
+                  <span class="report-switch"><input type="checkbox" checked data-report-section="actionPlan" /><i></i></span>
                 </label>
               </div>
             </div>
 
-            <button class="report-preview-button" type="button">
+            <button class="report-preview-button" type="button" data-report-refresh>
               <svg viewBox="0 0 24 24" role="presentation">
                 <path d="M18 10a6 6 0 1 0 1.2 5.2M18 10V5.8m0 4.2h-4.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
               </svg>
               Atualizar Preview
             </button>
+
+            <p class="stack-feedback" data-report-feedback aria-live="polite"></p>
           </aside>
 
-          <section class="report-preview-area">
-            <article class="report-page report-page--cover">
-              <div class="report-page__topmeta">USO INTERNO / CONFIDENCIAL</div>
-
-              <div class="report-cover-brand">
-                <strong>AVALI<span>ESST</span></strong>
-                <span>Análise de Segurança e Saúde no Trabalho</span>
-              </div>
-
-              <span class="report-cover-kicker">RELATÓRIO DE DIAGNÓSTICOS</span>
-              <h2 class="report-cover-title">Avaliação de Riscos Psicossociais no Trabalho!</h2>
-              <span class="report-cover-line" aria-hidden="true"></span>
-
-              <div class="report-cover-meta">
-                <div>
-                  <span>ORGANIZAÇÃO AVALIADA</span>
-                  <strong>Tech Solutions S.A.</strong>
-                </div>
-                <div>
-                  <span>PERÍODO DE REFERÊNCIA</span>
-                  <strong>1º Semestre 2026 (Janeiro a Junho)</strong>
-                </div>
-                <div>
-                  <span>DATA DE EMISSÃO</span>
-                  <strong>24 de Julho de 2026</strong>
-                </div>
-              </div>
-
-              <div class="report-cover-footer">
-                <div>
-                  <strong>Sistema AvalieSST</strong>
-                  <span>Metodologia baseada em protocolos validados</span>
-                </div>
-                <span>Página 1</span>
-              </div>
-            </article>
-
-            <article class="report-page">
-              <section class="report-section">
-                <h3 class="report-section-title">Índice</h3>
-                <div class="report-index">
-                  <div class="report-index__row"><span>1. Resumo Executivo e Métricas Principais</span><strong>02</strong></div>
-                  <div class="report-index__row"><span>1. Matriz de Risco Geral (Heatmap)</span><strong>03</strong></div>
-                  <div class="report-index__row"><span>1. Análise Detalhada por Setor</span><strong>04</strong></div>
-                  <div class="report-index__row"><span>1. Plano de Ação Recomendado</span><strong>06</strong></div>
-                </div>
-              </section>
-
-              <section class="report-section report-section--spaced">
-                <h3 class="report-section-title">1. Resumo Executivo</h3>
-                <p class="report-paragraph">
-                  Este relatório apresenta os resultados da avaliação de riscos psicossociais
-                  realizada na Tech Solutions S.A. A metodologia aplicada mapeia fatores
-                  organizacionais que podem impactar a saúde mental e o bem-estar dos
-                  colaboradores. O Índice Global de Risco atual indica uma necessidade de
-                  atenção moderada, com focos específicos em setores operacionais.
-                </p>
-
-                <div class="report-metrics">
-                  <article class="report-mini-card">
-                    <span>ÍNDICE GLOBAL DE RISCO</span>
-                    <strong>42 <small>/100</small></strong>
-                    <em>Risco Moderado</em>
-                  </article>
-                  <article class="report-mini-card">
-                    <span>PARTICIPAÇÃO</span>
-                    <strong>87%</strong>
-                    <em class="is-green">Adesão Excelente</em>
-                  </article>
-                  <article class="report-mini-card">
-                    <span>SETORES CRÍTICOS</span>
-                    <strong class="is-red">3 <small>de 12</small></strong>
-                    <em class="is-red">Ação Imediata Necessária</em>
-                  </article>
-                </div>
-
-                <div class="report-chart-grid">
-                  <article class="report-chart-card">
-                    <span class="report-chart-card__title">Evolução do Índice de Risco</span>
-                    <svg viewBox="0 0 240 120" role="presentation">
-                      <line x1="24" y1="20" x2="24" y2="96" class="chart-axis"></line>
-                      <line x1="24" y1="96" x2="216" y2="96" class="chart-axis"></line>
-                      <path d="M24 78C48 58 82 56 120 58C152 60 184 66 216 72" class="chart-line"></path>
-                      <path d="M24 78C48 58 82 56 120 58C152 60 184 66 216 72L216 96L24 96Z" class="chart-area"></path>
-                      <circle cx="48" cy="58" r="3.5" class="chart-point"></circle>
-                      <circle cx="216" cy="72" r="3.5" class="chart-point"></circle>
-                      <text x="18" y="26" class="chart-label">100</text>
-                      <text x="18" y="98" class="chart-label">0</text>
-                      <text x="96" y="110" class="chart-label">2.022,5</text>
-                      <text x="182" y="110" class="chart-label">2023</text>
-                    </svg>
-                  </article>
-
-                  <article class="report-chart-card">
-                    <span class="report-chart-card__title">Dimensões mais Críticas</span>
-                    <svg viewBox="0 0 240 120" role="presentation">
-                      <circle cx="120" cy="62" r="38" class="radar-ring"></circle>
-                      <circle cx="120" cy="62" r="24" class="radar-ring"></circle>
-                      <path d="M120 24v76M84 43l72 38M84 81l72-38" class="radar-axis"></path>
-                      <polygon points="120,34 146,48 156,66 126,86 94,78 88,54" class="radar-shape radar-shape--blue"></polygon>
-                      <polygon points="120,42 136,46 146,76 116,76 92,72 96,50" class="radar-shape radar-shape--red"></polygon>
-                      <text x="138" y="16" class="chart-label">Sobrecarga</text>
-                      <text x="178" y="62" class="chart-label">Conflito</text>
-                      <text x="138" y="108" class="chart-label">Apoio</text>
-                      <text x="40" y="84" class="chart-label">Autonomia</text>
-                      <text x="42" y="46" class="chart-label">Controle</text>
-                    </svg>
-                  </article>
-                </div>
-              </section>
-
-              <span class="report-page__number">Página 2</span>
-            </article>
-
-            <article class="report-page">
-              <section class="report-section">
-                <h3 class="report-section-title">2. Matriz de Risco (Heatmap)</h3>
-                <p class="report-paragraph">
-                  A matriz abaixo cruza a Probabilidade de ocorrência dos fatores de risco com
-                  o Impacto potencial na saúde e produtividade. Os itens localizados no
-                  quadrante superior direito (zona vermelha) exigem intervenção prioritária
-                  através do plano de ação.
-                </p>
-
-                <div class="heatmap-wrap">
-                  <span class="heatmap-axis heatmap-axis--left">IMPACTO</span>
-                  <div class="heatmap-grid">
-                    <span class="heatmap-cell heatmap-cell--y1">5</span>
-                    <span class="heatmap-cell heatmap-cell--y2">10</span>
-                    <span class="heatmap-cell heatmap-cell--o1">15</span>
-                    <span class="heatmap-cell heatmap-cell--r1">20</span>
-                    <span class="heatmap-cell heatmap-cell--r2">25</span>
-
-                    <span class="heatmap-cell heatmap-cell--g1">4</span>
-                    <span class="heatmap-cell heatmap-cell--y1">8</span>
-                    <span class="heatmap-cell heatmap-cell--y2">12</span>
-                    <span class="heatmap-cell heatmap-cell--o1">16</span>
-                    <span class="heatmap-cell heatmap-cell--r1">20</span>
-
-                    <span class="heatmap-cell heatmap-cell--g2">3</span>
-                    <span class="heatmap-cell heatmap-cell--g1">6</span>
-                    <span class="heatmap-cell heatmap-cell--y1">9</span>
-                    <span class="heatmap-cell heatmap-cell--y2">12</span>
-                    <span class="heatmap-cell heatmap-cell--o1">15</span>
-
-                    <span class="heatmap-cell heatmap-cell--g3">2</span>
-                    <span class="heatmap-cell heatmap-cell--g2">4</span>
-                    <span class="heatmap-cell heatmap-cell--g1">6</span>
-                    <span class="heatmap-cell heatmap-cell--y1">8</span>
-                    <span class="heatmap-cell heatmap-cell--y2">10</span>
-
-                    <span class="heatmap-cell heatmap-cell--g4">1</span>
-                    <span class="heatmap-cell heatmap-cell--g3">2</span>
-                    <span class="heatmap-cell heatmap-cell--g2">3</span>
-                    <span class="heatmap-cell heatmap-cell--g1">4</span>
-                    <span class="heatmap-cell heatmap-cell--y1">5</span>
-
-                    <span class="heatmap-marker" style="top: 66px; left: 228px;">2</span>
-                    <span class="heatmap-marker" style="top: 122px; left: 174px;">1</span>
-                    <span class="heatmap-marker" style="top: 178px; left: 118px;">3</span>
-                    <span class="heatmap-marker" style="top: 290px; left: 118px;">4</span>
-                  </div>
-                  <span class="heatmap-axis heatmap-axis--bottom">PROBABILIDADE</span>
-                </div>
-
-                <div class="mapped-factors-card">
-                  <strong>Fatores Mapeados (Top 5)</strong>
-                  <div class="mapped-factor-row"><i>1</i><span>Ritmo Intenso de Trabalho (Setor Produção)</span></div>
-                  <small>Probabilidade: 5 | Impacto: 5 | Score: 25 (Risco Extremo)</small>
-                  <div class="mapped-factor-row"><i>2</i><span>Sobrecarga Emocional (Setor Atendimento)</span></div>
-                  <small>Probabilidade: 5 | Impacto: 5 | Score: 25 (Risco Extremo)</small>
-                  <div class="mapped-factor-row"><i>3</i><span>Conflito de Demandas (Setor Administrativo)</span></div>
-                  <small>Probabilidade: 4 | Impacto: 4 | Score: 16 (Risco Alto)</small>
-                </div>
-              </section>
-
-              <span class="report-page__number">Página 3</span>
-            </article>
-
-            <article class="report-page">
-              <section class="report-section">
-                <h3 class="report-section-title">3. Plano de Ação Recomendado</h3>
-                <p class="report-paragraph">
-                  Com base nos riscos identificados nas zonas críticas (Alta e Extrema), o
-                  sistema gerou automaticamente as seguintes recomendações de intervenção
-                  primária, secundária e terciária.
-                </p>
-
-                <div class="report-action-table">
-                  <div class="report-action-table__head">
-                    <span>FATOR DE RISCO</span>
-                    <span>AÇÃO RECOMENDADA</span>
-                    <span>PRAZO</span>
-                    <span>STATUS</span>
-                  </div>
-
-                  <div class="report-action-table__row">
-                    <div><strong>Ritmo Intenso</strong><small>Produção</small></div>
-                    <div>Revisão das metas diárias de produção e implementação de pausas curtas (10 min) a cada 2 horas de trabalho contínuo.</div>
-                    <div>30 dias</div>
-                    <div><span class="plan-status plan-status--high">Prioridade Alta</span></div>
-                  </div>
-
-                  <div class="report-action-table__row">
-                    <div><strong>Sobrecarga Emocional</strong><small>Atendimento</small></div>
-                    <div>Treinamento de desescalada de conflitos para a equipe e criação de um protocolo de rodízio para clientes complexos.</div>
-                    <div>45 dias</div>
-                    <div><span class="plan-status plan-status--high">Prioridade Alta</span></div>
-                  </div>
-
-                  <div class="report-action-table__row">
-                    <div><strong>Conflito de Demandas</strong><small>Administrativo</small></div>
-                    <div>Clarificação de papéis e responsabilidades. Estabelecimento de um canal único para solicitações interdepartamentais.</div>
-                    <div>60 dias</div>
-                    <div><span class="plan-status plan-status--medium">Prioridade Média</span></div>
-                  </div>
-
-                  <div class="report-action-table__row">
-                    <div><strong>Falta de Autonomia</strong><small>TI &amp; Desenvolv.</small></div>
-                    <div>Implementação de modelo ágil com maior poder de decisão na ponta. Reuniões quinzenais de feedback e sugestões.</div>
-                    <div>90 dias</div>
-                    <div><span class="plan-status plan-status--monitor">Monitorar</span></div>
-                  </div>
-                </div>
-
-                <div class="report-signature-card">
-                  <div class="report-signature-card__head">
-                    <span class="report-signature-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" role="presentation">
-                        <path d="M7 15.5c2.5-2.8 5-4.8 7.4-5.9M9.5 18.2c3.7-1.5 6.6-4.4 8.2-8.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
-                        <circle cx="8" cy="8" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8" />
-                      </svg>
-                    </span>
-                    <div>
-                      <strong>Assinaturas e Validação</strong>
-                      <span>Este documento foi gerado eletronicamente pelo sistema AvaliePsy e requer aprovação da diretoria para início da execução do plano de ação.</span>
-                    </div>
-                  </div>
-
-                  <div class="report-signature-lines">
-                    <div>
-                      <span></span>
-                      <strong>Responsável SST</strong>
-                      <small>Tech Solutions S.A.</small>
-                    </div>
-                    <div>
-                      <span></span>
-                      <strong>Diretoria</strong>
-                      <small>Tech Solutions S.A.</small>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <span class="report-page__number">Página 4</span>
-            </article>
-          </section>
+          <section class="report-preview-area" data-report-preview-area></section>
         </div>
       </section>
     </main>
 
-    <script src="api-client.js"></script>
-    <script src="dashboard.js"></script>
+    <script src="api-client.js?v=20260421u2"></script>
+    <script src="dashboard.js?v=20260421ort1"></script>
+    <script src="relatorios.js?v=20260421ort1"></script>
   </body>
 </html>

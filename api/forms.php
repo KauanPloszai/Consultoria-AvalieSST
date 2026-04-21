@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
-require_auth();
+require_admin();
 
 function fetch_forms(PDO $pdo): array
 {
@@ -50,6 +50,38 @@ function fetch_forms(PDO $pdo): array
 
             $forms[$formId]['questions'][] = (string) $questionRow['question_text'];
         }
+
+        $linksStatement = $pdo->prepare(
+            "SELECT l.form_id, c.id AS company_id, c.name AS company_name
+             FROM company_form_links l
+             INNER JOIN companies c ON c.id = l.company_id
+             WHERE l.form_id IN ($placeholders)
+             ORDER BY name ASC"
+        );
+        $linksStatement->execute($formIds);
+
+        foreach ($linksStatement->fetchAll() as $linkRow) {
+            $formId = (int) $linkRow['form_id'];
+
+            if (!isset($forms[$formId])) {
+                continue;
+            }
+
+            if (!isset($forms[$formId]['linkedCompanies'])) {
+                $forms[$formId]['linkedCompanies'] = [];
+            }
+
+            $forms[$formId]['linkedCompanies'][] = [
+                'id' => (int) $linkRow['company_id'],
+                'name' => (string) $linkRow['company_name'],
+            ];
+        }
+    }
+
+    foreach ($forms as $formId => $form) {
+        $linkedCompanies = $form['linkedCompanies'] ?? [];
+        $forms[$formId]['linkedCompanies'] = $linkedCompanies;
+        $forms[$formId]['linkedCompaniesCount'] = count($linkedCompanies);
     }
 
     return array_values($forms);
@@ -121,6 +153,99 @@ function replace_form_questions(PDO $pdo, int $formId, array $questions): void
             'question_text' => $question,
             'position' => $index + 1,
         ]);
+    }
+}
+
+function resolve_company_active_form(PDO $pdo, int $companyId): ?int
+{
+    $companyStatement = $pdo->prepare(
+        'SELECT active_form_id
+         FROM companies
+         WHERE id = :company_id
+         LIMIT 1'
+    );
+    $companyStatement->execute(['company_id' => $companyId]);
+    $currentActiveFormId = (int) $companyStatement->fetchColumn();
+
+    if ($currentActiveFormId > 0) {
+        $currentStatement = $pdo->prepare(
+            "SELECT l.form_id
+             FROM company_form_links l
+             INNER JOIN forms f ON f.id = l.form_id
+             WHERE l.company_id = :company_id
+               AND l.form_id = :form_id
+               AND f.status = 'active'
+             LIMIT 1"
+        );
+        $currentStatement->execute([
+            'company_id' => $companyId,
+            'form_id' => $currentActiveFormId,
+        ]);
+
+        if ($currentStatement->fetchColumn() !== false) {
+            return $currentActiveFormId;
+        }
+    }
+
+    $fallbackStatement = $pdo->prepare(
+        "SELECT l.form_id
+         FROM company_form_links l
+         INNER JOIN forms f ON f.id = l.form_id
+         WHERE l.company_id = :company_id
+           AND f.status = 'active'
+         ORDER BY l.updated_at DESC, l.id DESC
+         LIMIT 1"
+    );
+    $fallbackStatement->execute(['company_id' => $companyId]);
+    $fallbackFormId = (int) $fallbackStatement->fetchColumn();
+
+    return $fallbackFormId > 0 ? $fallbackFormId : null;
+}
+
+function sync_company_active_form(PDO $pdo, int $companyId): void
+{
+    $nextFormId = resolve_company_active_form($pdo, $companyId);
+    $updateStatement = $pdo->prepare(
+        'UPDATE companies
+         SET active_form_id = :active_form_id,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = :company_id'
+    );
+    $updateStatement->bindValue('company_id', $companyId, PDO::PARAM_INT);
+
+    if ($nextFormId === null) {
+        $updateStatement->bindValue('active_form_id', null, PDO::PARAM_NULL);
+    } else {
+        $updateStatement->bindValue('active_form_id', $nextFormId, PDO::PARAM_INT);
+    }
+
+    $updateStatement->execute();
+}
+
+function sync_companies_for_form(PDO $pdo, int $formId): void
+{
+    $statement = $pdo->prepare(
+        'SELECT DISTINCT company_id
+         FROM company_form_links
+         WHERE form_id = :linked_form_id
+
+         UNION
+
+         SELECT id AS company_id
+         FROM companies
+         WHERE active_form_id = :active_form_id'
+    );
+    $statement->execute([
+        'linked_form_id' => $formId,
+        'active_form_id' => $formId,
+    ]);
+
+    foreach ($statement->fetchAll(PDO::FETCH_COLUMN) as $companyId) {
+        $normalizedCompanyId = (int) $companyId;
+
+        if ($normalizedCompanyId > 0) {
+            sync_company_active_form($pdo, $normalizedCompanyId);
+        }
     }
 }
 
@@ -213,6 +338,7 @@ if ($method === 'PUT') {
         ]);
 
         replace_form_questions($pdo, $formId, $payload['questions']);
+        sync_companies_for_form($pdo, $formId);
         $pdo->commit();
     } catch (Throwable $throwable) {
         if ($pdo->inTransaction()) {

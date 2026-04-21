@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AvaliESST | Gestão de Empresas</title>
-    <link rel="stylesheet" href="dashboard.css" />
+    <title>AvaliESST | Dashboard Administrativo</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260421u5" />
   </head>
   <body class="dashboard-body">
     <header class="app-header">
@@ -14,10 +14,18 @@
 
       <div class="app-header__title">
         <span>Admin &gt;</span>
-        <h1>Gestão de Empresas</h1>
+        <h1>Dashboard Administrativo</h1>
       </div>
 
       <div class="app-header__actions">
+        <button class="header-action header-action--light" type="button" data-open-users-modal>
+          <svg viewBox="0 0 24 24" role="presentation">
+            <circle cx="9" cy="8.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+            <path d="M4.8 17a4.2 4.2 0 0 1 8.4 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+            <path d="M16 8h4m-2-2v4M15.5 16h4.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+          </svg>
+          Gerenciador de Usuários
+        </button>
         <a class="header-action" href="formularios.html">
           <svg viewBox="0 0 24 24" role="presentation">
             <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
@@ -116,8 +124,8 @@
                 </svg>
               </span>
             </div>
-            <strong class="metric-card__value">124</strong>
-            <span class="metric-card__hint metric-card__hint--green">+ 12% vs último mês</span>
+            <strong class="metric-card__value" data-dashboard-active-companies>0</strong>
+            <span class="metric-card__hint metric-card__hint--green" data-dashboard-active-companies-hint>Empresas ativas no ambiente.</span>
           </article>
 
           <article class="metric-card">
@@ -130,8 +138,8 @@
                 </svg>
               </span>
             </div>
-            <strong class="metric-card__value">45</strong>
-            <span class="metric-card__hint metric-card__hint--blue">+ 5 novas esta semana</span>
+            <strong class="metric-card__value" data-dashboard-in-progress>0</strong>
+            <span class="metric-card__hint metric-card__hint--blue" data-dashboard-in-progress-hint>Sessões abertas para a empresa filtrada.</span>
           </article>
 
           <article class="metric-card">
@@ -139,8 +147,9 @@
               <span class="metric-card__title">Taxa de Conformidade</span>
               <span class="metric-card__icon metric-card__icon--soft"></span>
             </div>
-            <strong class="metric-card__value">82%</strong>
-            <div class="metric-progress" aria-hidden="true"><span style="width: 82%;"></span></div>
+            <strong class="metric-card__value" data-dashboard-compliance>0%</strong>
+            <div class="metric-progress" aria-hidden="true"><span data-dashboard-compliance-bar style="width: 0%;"></span></div>
+            <span class="metric-card__hint metric-card__hint--blue" data-dashboard-compliance-hint>Taxa de resposta do período atual.</span>
           </article>
 
           <article class="metric-card">
@@ -153,8 +162,8 @@
                 </svg>
               </span>
             </div>
-            <strong class="metric-card__value">18</strong>
-            <span class="metric-card__hint metric-card__hint--red">+ 3 críticas requerem atenção</span>
+            <strong class="metric-card__value" data-dashboard-pending-actions>0</strong>
+            <span class="metric-card__hint metric-card__hint--red" data-dashboard-pending-actions-hint>Setores e funções com risco moderado ou alto.</span>
           </article>
         </section>
 
@@ -163,62 +172,23 @@
             <div class="panel__header">
               <div>
                 <h2>Evolução de Avaliações</h2>
-                <p>Volume de avaliações concluídas nos últimos meses</p>
+                <p data-dashboard-chart-subtitle>Volume de avaliações concluídas nos últimos meses</p>
               </div>
             </div>
-            <div class="line-chart">
-              <svg viewBox="0 0 620 270" role="presentation" preserveAspectRatio="none">
-                <g class="line-chart__grid">
-                  <line x1="52" y1="30" x2="592" y2="30"></line>
-                  <line x1="52" y1="76" x2="592" y2="76"></line>
-                  <line x1="52" y1="122" x2="592" y2="122"></line>
-                  <line x1="52" y1="168" x2="592" y2="168"></line>
-                  <line x1="52" y1="214" x2="592" y2="214"></line>
-                </g>
-                <g class="line-chart__axis">
-                  <text x="18" y="34">30</text>
-                  <text x="18" y="80">25</text>
-                  <text x="18" y="126">20</text>
-                  <text x="18" y="172">15</text>
-                  <text x="18" y="218">10</text>
-                </g>
-                <path class="line-chart__path" d="M52 194C82 164 112 138 142 128C172 118 202 128 232 160C262 192 292 182 322 126C352 70 382 60 412 88C442 116 472 156 502 142C532 128 562 92 592 32"></path>
-                <g class="line-chart__points">
-                  <circle cx="52" cy="194" r="4"></circle>
-                  <circle cx="142" cy="128" r="4"></circle>
-                  <circle cx="232" cy="160" r="4"></circle>
-                  <circle cx="322" cy="126" r="4"></circle>
-                  <circle cx="412" cy="88" r="4"></circle>
-                  <circle cx="502" cy="142" r="4"></circle>
-                  <circle cx="592" cy="32" r="4"></circle>
-                </g>
-                <g class="line-chart__labels">
-                  <text x="52" y="250">Jan</text>
-                  <text x="142" y="250">Fev</text>
-                  <text x="232" y="250">Mar</text>
-                  <text x="322" y="250">Abr</text>
-                  <text x="412" y="250">Mai</text>
-                  <text x="592" y="250" text-anchor="end">Jun</text>
-                </g>
-              </svg>
-            </div>
+            <div class="line-chart" data-dashboard-line-chart></div>
           </article>
 
           <article class="panel panel--status">
             <div class="panel__header">
               <div>
-                <h2>Status dos Planos</h2>
-                <p>Distribuição geral de ações</p>
+                <h2>Status das Coletas</h2>
+                <p>Distribuição geral das sessões da empresa selecionada</p>
               </div>
             </div>
             <div class="donut-wrap">
-              <div class="donut-chart"></div>
+              <div class="donut-chart" data-dashboard-donut-chart></div>
             </div>
-            <div class="legend">
-              <span><i class="legend__dot legend__dot--green"></i>Concluídas</span>
-              <span><i class="legend__dot legend__dot--blue"></i>Em Andamento</span>
-              <span><i class="legend__dot legend__dot--red"></i>Atrasadas</span>
-            </div>
+            <div class="legend" data-dashboard-donut-legend></div>
           </article>
         </section>
 
@@ -230,28 +200,28 @@
           <div class="filters-grid">
             <label class="filter-field">
               <span>Empresa</span>
-              <select>
-                <option>TechCorp Brasil</option>
-              </select>
+              <select data-dashboard-company-filter></select>
             </label>
             <label class="filter-field">
               <span>Setor</span>
-              <select>
-                <option>Todos os Setores</option>
-              </select>
+              <select data-dashboard-sector-filter></select>
             </label>
             <label class="filter-field">
               <span>Funções</span>
-              <select>
-                <option>Todas as Funções</option>
-              </select>
+              <select data-dashboard-function-filter></select>
             </label>
             <label class="filter-field">
               <span>Período</span>
-              <input type="text" value="dd/mm/aaaa" />
+              <select data-dashboard-period-filter>
+                <option value="30">Últimos 30 dias</option>
+                <option value="90">Últimos 90 dias</option>
+                <option value="180" selected>Últimos 6 meses</option>
+                <option value="365">Últimos 12 meses</option>
+                <option value="all">Todo o histórico</option>
+              </select>
             </label>
             <div class="filters-action">
-              <button class="filter-button" type="button">Filtrar</button>
+              <button class="filter-button" type="button" data-dashboard-apply>Filtrar</button>
             </div>
           </div>
         </section>
@@ -263,80 +233,107 @@
             <span>Riscos Identificados</span>
             <span>Ações</span>
           </div>
-
-          <article class="table-row">
-            <div class="table-row__main">
-              <button class="expand-button" type="button" aria-label="Expandir">
-                <svg viewBox="0 0 24 24" role="presentation">
-                  <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                </svg>
-              </button>
-              <span class="building-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="presentation">
-                  <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
-                </svg>
-              </span>
-              <strong>Diretoria Executiva</strong>
-            </div>
-            <span class="table-row__count">4</span>
-            <span class="risk-badge">Psico</span>
-            <button class="edit-button" type="button" aria-label="Editar">
-              <svg viewBox="0 0 24 24" role="presentation">
-                <path d="m4 16.5 9.8-9.8a2.1 2.1 0 1 1 3 3L7 19.5 4 20l.5-3.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
-              </svg>
-            </button>
-          </article>
-
-          <article class="table-row">
-            <div class="table-row__main">
-              <button class="expand-button" type="button" aria-label="Expandir">
-                <svg viewBox="0 0 24 24" role="presentation">
-                  <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                </svg>
-              </button>
-              <span class="building-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="presentation">
-                  <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
-                </svg>
-              </span>
-              <strong>Tecnologia da Informação</strong>
-            </div>
-            <span class="table-row__count">28</span>
-            <span class="risk-badge">Ergo, Psico</span>
-            <button class="edit-button" type="button" aria-label="Editar">
-              <svg viewBox="0 0 24 24" role="presentation">
-                <path d="m4 16.5 9.8-9.8a2.1 2.1 0 1 1 3 3L7 19.5 4 20l.5-3.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
-              </svg>
-            </button>
-          </article>
-
-          <article class="table-row">
-            <div class="table-row__main">
-              <button class="expand-button" type="button" aria-label="Expandir">
-                <svg viewBox="0 0 24 24" role="presentation">
-                  <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                </svg>
-              </button>
-              <span class="building-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="presentation">
-                  <path d="M5 20V8.5A1.5 1.5 0 0 1 6.5 7H14v13H5Zm9 0V4.5A1.5 1.5 0 0 1 15.5 3H19v17h-5ZM8 10h2m-2 3h2m-2 3h2m7-6h1m-1 3h1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
-                </svg>
-              </span>
-              <strong>Produção / Manufatura</strong>
-            </div>
-            <span class="table-row__count">120</span>
-            <span class="risk-badge">Físico, Químico</span>
-            <button class="edit-button" type="button" aria-label="Editar">
-              <svg viewBox="0 0 24 24" role="presentation">
-                <path d="m4 16.5 9.8-9.8a2.1 2.1 0 1 1 3 3L7 19.5 4 20l.5-3.5Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
-              </svg>
-            </button>
-          </article>
+          <div data-dashboard-plan-body></div>
         </section>
       </section>
     </main>
 
-    <script src="api-client.js"></script>
-    <script src="dashboard.js"></script>
+    <section class="form-modal users-modal" data-users-modal hidden>
+      <div class="form-modal__backdrop" data-close-users-modal></div>
+
+      <div class="form-modal__dialog users-modal__dialog">
+        <header class="form-modal__header">
+          <div>
+            <span class="form-modal__eyebrow">Administração de acessos</span>
+            <h2>Gerenciador de Usuários</h2>
+          </div>
+
+          <button class="form-modal__close" type="button" data-close-users-modal aria-label="Fechar">
+            <svg viewBox="0 0 24 24" role="presentation">
+              <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+            </svg>
+          </button>
+        </header>
+
+        <div class="users-manager">
+          <section class="form-builder__section">
+            <div class="form-builder__section-head">
+              <div>
+                <h3>Usuários cadastrados</h3>
+                <p>Crie logins do tipo admin ou vincule usuários a uma empresa específica.</p>
+              </div>
+
+              <button class="form-builder__ghost" type="button" data-users-new>Novo usuário</button>
+            </div>
+
+            <div class="users-manager__list" data-users-list></div>
+          </section>
+
+          <section class="form-builder__section">
+            <div class="form-builder__section-head">
+              <div>
+                <h3 data-users-form-title>Novo usuário</h3>
+                <p>E-mail e senha definem o acesso. Para perfil empresa, selecione a empresa vinculada.</p>
+              </div>
+            </div>
+
+            <form class="users-form" data-users-form>
+              <input type="hidden" data-users-id />
+
+              <div class="company-builder__grid">
+                <label class="company-builder__field">
+                  <span>E-mail</span>
+                  <input type="email" placeholder="usuario@empresa.com" data-users-email />
+                </label>
+
+                <label class="company-builder__field">
+                  <span>Senha</span>
+                  <input type="password" placeholder="Digite a senha" data-users-password />
+                </label>
+
+                <label class="company-builder__field">
+                  <span>Tipo de usuário</span>
+                  <select data-users-role>
+                    <option value="admin">Admin</option>
+                    <option value="company">Empresa</option>
+                  </select>
+                </label>
+
+                <label class="company-builder__field" data-users-company-field hidden>
+                  <span>Empresa vinculada</span>
+                  <select data-users-company></select>
+                </label>
+              </div>
+
+              <label class="users-checkbox">
+                <input type="checkbox" data-users-active checked />
+                <span>Usuário ativo</span>
+              </label>
+
+              <p class="form-builder__feedback" data-users-feedback aria-live="polite"></p>
+
+              <div class="form-builder__actions">
+                <div class="form-builder__actions-group">
+                  <button class="form-builder__ghost users-form__danger" type="button" data-users-delete hidden>
+                    Excluir usuário
+                  </button>
+                  <button class="form-builder__ghost" type="button" data-users-cancel>
+                    Cancelar
+                  </button>
+                </div>
+
+                <button class="form-builder__primary" type="submit" data-users-save>
+                  Salvar usuário
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <script src="api-client.js?v=20260421u2"></script>
+    <script src="dashboard.js?v=20260421ort1"></script>
+    <script src="users-manager.js?v=20260421ort1"></script>
   </body>
 </html>

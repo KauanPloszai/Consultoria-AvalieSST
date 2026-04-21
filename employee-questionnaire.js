@@ -16,7 +16,7 @@ const STORED_EMPLOYEE_SESSION_KEY = "employeeQuestionnaireSessionId";
 const RESPONSE_SCALE = {
   1: "Nunca",
   2: "Raramente",
-  3: "As vezes",
+  3: "Às vezes",
   4: "Frequentemente",
   5: "Sempre",
 };
@@ -120,7 +120,7 @@ function getCurrentQuestions() {
 
 function getAnswerLabel(answerValue) {
   const normalizedValue = Number(answerValue);
-  return RESPONSE_SCALE[normalizedValue] || "Nao respondida";
+  return RESPONSE_SCALE[normalizedValue] || "Não respondida";
 }
 
 function updateQuestionnaireHeader() {
@@ -165,20 +165,20 @@ function updateQuestionnaireFooter() {
 
 function buildQuestionStepMarkup() {
   const currentQuestions = getCurrentQuestions();
-  const formName = questionnaireState.data?.formName || "Questionario";
+  const formName = questionnaireState.data?.formName || "Questionário";
 
   return `
     <div class="employee-questionnaire-intro">
       <h1>${escapeHtml(formName)}</h1>
       <p>
-        Por favor, responda as afirmacoes abaixo considerando sua rotina de trabalho
-        nos ultimos 30 dias. Nao ha respostas certas ou erradas.
+        Por favor, responda às afirmações abaixo considerando sua rotina de trabalho
+        nos últimos 30 dias. Não há respostas certas ou erradas.
       </p>
     </div>
 
     <div class="employee-questionnaire-scale-box">
       <strong>Escala de resposta:</strong>
-      <span>1 = Nunca | 2 = Raramente | 3 = As vezes | 4 = Frequentemente | 5 = Sempre</span>
+      <span>1 = Nunca | 2 = Raramente | 3 = Às vezes | 4 = Frequentemente | 5 = Sempre</span>
     </div>
 
     <div class="employee-questionnaire-questions">
@@ -228,7 +228,7 @@ function buildReviewMarkup() {
 
   return `
     <div class="employee-questionnaire-intro employee-questionnaire-intro--review">
-      <h1>Revisao das Respostas</h1>
+      <h1>Revisão das Respostas</h1>
       <p>
         Confira abaixo suas respostas antes do envio final. Caso precise ajustar
         alguma resposta, volte para as etapas anteriores.
@@ -238,8 +238,8 @@ function buildReviewMarkup() {
     <div class="employee-questionnaire-scale-box employee-questionnaire-scale-box--review">
       <strong>Suas respostas sao anonimas</strong>
       <span>
-        Os dados coletados serao consolidados e analisados em grupo. A empresa
-        nao tera acesso as respostas individuais.
+        Os dados coletados serão consolidados e analisados em grupo. A empresa
+        não terá acesso às respostas individuais.
       </span>
     </div>
 
@@ -284,18 +284,18 @@ function buildCompletionMarkup() {
           </svg>
         </span>
 
-        <h1>Avaliacao Concluida!</h1>
+        <h1>Avaliação Concluída!</h1>
         <p>
-          Muito obrigado por sua participacao. Suas respostas foram registradas
-          com sucesso e ajudarao na construcao de um ambiente de trabalho mais
-          saudavel e seguro para todos.
+          Muito obrigado por sua participação. Suas respostas foram registradas
+          com sucesso e ajudarão na construção de um ambiente de trabalho mais
+          saudável e seguro para todos.
         </p>
 
         <div class="employee-completion-note">
           <strong>Garantia de Anonimato</strong>
           <span>
-            Seus dados foram registrados de forma anonima. O RH e a lideranca
-            terao acesso apenas a relatorios consolidados do grupo.
+            Seus dados foram registrados de forma anônima. O RH e a liderança
+            terão acesso apenas a relatórios consolidados do grupo.
           </span>
         </div>
 
@@ -304,11 +304,11 @@ function buildCompletionMarkup() {
             Baixar ID de Envio
           </button>
           <a class="employee-questionnaire-button employee-questionnaire-button--primary" href="acesso-funcionario.html">
-            Finalizar Sessao
+            Finalizar Sessão
           </a>
         </div>
 
-        <small>ID da sessao: ${escapeHtml(sessionId)}</small>
+        <small>ID da sessão: ${escapeHtml(sessionId)}</small>
       </article>
 
       <div class="employee-completion-foot">
@@ -322,10 +322,10 @@ function buildErrorMarkup(message) {
   return `
     <section class="employee-completion-shell employee-completion-shell--error">
       <article class="employee-completion-card employee-completion-card--error">
-        <h1>Questionario indisponivel</h1>
+        <h1>Questionário indisponível</h1>
         <p>${escapeHtml(message)}</p>
         <a class="employee-questionnaire-button employee-questionnaire-button--primary" href="acesso-funcionario.html">
-          Voltar para o codigo de acesso
+          Voltar para o código de acesso
         </a>
       </article>
     </section>
@@ -344,8 +344,8 @@ function renderQuestionnaire() {
     questionnaireContent.innerHTML = `
       <section class="employee-completion-shell employee-completion-shell--loading">
         <article class="employee-completion-card employee-completion-card--loading">
-          <h1>Carregando questionario...</h1>
-          <p>Aguarde enquanto buscamos as perguntas vinculadas ao seu codigo.</p>
+          <h1>Carregando questionário...</h1>
+          <p>Aguarde enquanto buscamos as perguntas vinculadas ao seu código.</p>
         </article>
       </section>
     `;
@@ -353,7 +353,7 @@ function renderQuestionnaire() {
   }
 
   if (!questionnaireState.data) {
-    questionnaireContent.innerHTML = buildErrorMarkup("Nao foi possivel localizar esta sessao.");
+    questionnaireContent.innerHTML = buildErrorMarkup("Não foi possível localizar esta sessão.");
     return;
   }
 
@@ -387,7 +387,7 @@ function validateAllAnswers() {
     const answerValue = Number(questionnaireState.answers[question.id] || 0);
 
     if (answerValue < 1 || answerValue > 5) {
-      setQuestionnaireFeedback("Responda todas as perguntas antes de enviar o questionario.", false);
+      setQuestionnaireFeedback("Responda todas as perguntas antes de enviar o questionário.", false);
       return false;
     }
   }
@@ -401,7 +401,7 @@ async function loadQuestionnaire() {
   if (!questionnaireState.sessionId) {
     questionnaireState.isLoading = false;
     questionnaireState.data = null;
-    setQuestionnaireFeedback("Sessao do questionario nao informada.", false);
+    setQuestionnaireFeedback("Sessão do questionário não informada.", false);
     renderQuestionnaire();
     return;
   }
@@ -430,7 +430,7 @@ async function loadQuestionnaire() {
     setQuestionnaireFeedback("", false);
   } catch (error) {
     questionnaireState.data = null;
-    setQuestionnaireFeedback(error.message || "Nao foi possivel carregar o questionario.", false);
+    setQuestionnaireFeedback(error.message || "Não foi possível carregar o questionário.", false);
   } finally {
     questionnaireState.isLoading = false;
     renderQuestionnaire();
@@ -461,7 +461,7 @@ async function submitQuestionnaire() {
     questionnaireState.hasCompleted = true;
     setQuestionnaireFeedback("", false);
   } catch (error) {
-    setQuestionnaireFeedback(error.message || "Nao foi possivel enviar suas respostas.", false);
+    setQuestionnaireFeedback(error.message || "Não foi possível enviar suas respostas.", false);
   } finally {
     questionnaireState.isSubmitting = false;
     renderQuestionnaire();
@@ -497,10 +497,10 @@ function handleQuestionnaireContentClick(event) {
 
   if (downloadButton) {
     const sessionId = questionnaireState.data?.sessionId || questionnaireState.sessionId;
-    const formName = questionnaireState.data?.formName || "Questionario";
+    const formName = questionnaireState.data?.formName || "Questionário";
     const content = [
-      `ID da sessao: ${sessionId}`,
-      `Formulario: ${formName}`,
+      `ID da sessão: ${sessionId}`,
+      `Formulário: ${formName}`,
       `Data de envio: ${formatDateTime(questionnaireState.data?.submittedAt || "")}`,
     ].join("\r\n");
 
@@ -555,7 +555,7 @@ function handleExitClick(event) {
   }
 
   const shouldLeave = window.confirm(
-    "Deseja sair agora? As respostas ainda nao enviadas serao perdidas.",
+    "Deseja sair agora? As respostas ainda não enviadas serão perdidas.",
   );
 
   if (!shouldLeave) {

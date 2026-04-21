@@ -13,20 +13,29 @@ function fetch_questionnaire_session(PDO $pdo, string $sessionPublicId): ?array
              s.status AS session_status,
              s.started_at,
              s.updated_at,
+             s.completed_at,
              ac.id AS access_code_id,
              ac.code AS access_code,
              ac.scope_label,
+             ac.scope_type,
+             ac.sector_id,
+             ac.function_id,
              ac.expires_at,
              ac.is_active,
              c.id AS company_id,
              c.name AS company_name,
              f.id AS form_id,
              f.public_code AS form_code,
-             f.name AS form_name
+             f.name AS form_name,
+             f.status AS form_status,
+             sct.sector_name,
+             fn.function_name
          FROM access_code_sessions s
          INNER JOIN employee_access_codes ac ON ac.id = s.access_code_id
          INNER JOIN companies c ON c.id = ac.company_id
          INNER JOIN forms f ON f.id = ac.form_id
+         LEFT JOIN company_sectors sct ON sct.id = ac.sector_id
+         LEFT JOIN company_functions fn ON fn.id = ac.function_id
          WHERE s.session_public_id = :session_id
          LIMIT 1'
     );
@@ -88,9 +97,14 @@ function build_questionnaire_payload(PDO $pdo, array $sessionRow): array
         'sessionId' => (string) $sessionRow['session_public_id'],
         'sessionStatus' => (string) $sessionRow['session_status'],
         'startedAt' => (string) $sessionRow['started_at'],
-        'submittedAt' => (string) $sessionRow['updated_at'],
+        'submittedAt' => (string) ($sessionRow['completed_at'] ?? $sessionRow['updated_at']),
         'accessCode' => (string) $sessionRow['access_code'],
+        'scopeType' => (string) ($sessionRow['scope_type'] ?? 'global'),
         'scopeLabel' => (string) $sessionRow['scope_label'],
+        'sectorId' => $sessionRow['sector_id'] !== null ? (int) $sessionRow['sector_id'] : null,
+        'sectorName' => (string) ($sessionRow['sector_name'] ?? ''),
+        'functionId' => $sessionRow['function_id'] !== null ? (int) $sessionRow['function_id'] : null,
+        'functionName' => (string) ($sessionRow['function_name'] ?? ''),
         'companyId' => (int) $sessionRow['company_id'],
         'companyName' => (string) $sessionRow['company_name'],
         'formId' => $formId,
@@ -107,6 +121,16 @@ function build_questionnaire_payload(PDO $pdo, array $sessionRow): array
             ['value' => 5, 'label' => 'Sempre'],
         ],
     ];
+}
+
+function ensure_questionnaire_form_is_active(array $sessionRow): void
+{
+    if (normalize_status((string) ($sessionRow['form_status'] ?? 'inactive')) === 'inactive') {
+        send_json(403, [
+            'success' => false,
+            'message' => 'Este formulario foi desativado e nao pode mais ser respondido.',
+        ]);
+    }
 }
 
 function parse_questionnaire_submission(array $input): array
@@ -191,6 +215,8 @@ if ($method === 'GET') {
         ]);
     }
 
+    ensure_questionnaire_form_is_active($sessionRow);
+
     send_json(200, [
         'success' => true,
         'data' => build_questionnaire_payload($pdo, $sessionRow),
@@ -207,6 +233,8 @@ if ($method === 'POST') {
             'message' => 'Sessao do questionario nao encontrada.',
         ]);
     }
+
+    ensure_questionnaire_form_is_active($sessionRow);
 
     if ((string) $sessionRow['session_status'] === 'done') {
         send_json(409, [
@@ -253,7 +281,9 @@ if ($method === 'POST') {
 
         $updateStatement = $pdo->prepare(
             'UPDATE access_code_sessions
-             SET status = :status, updated_at = CURRENT_TIMESTAMP
+             SET status = :status,
+                 updated_at = CURRENT_TIMESTAMP,
+                 completed_at = CURRENT_TIMESTAMP
              WHERE id = :id'
         );
         $updateStatement->execute([

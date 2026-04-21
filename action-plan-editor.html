@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AvaliESST | Plano de Ação</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260421u5" />
+  </head>
+  <body class="dashboard-body">
+    <header class="app-header">
+      <div class="app-header__brand">
+        <img class="app-header__logo" src="img/logo.png" alt="AvalieSST" />
+      </div>
+
+      <div class="app-header__title">
+        <span>Admin &gt; Plano de Ação</span>
+        <h1>Editar Plano de Ação</h1>
+      </div>
+
+      <div class="app-header__actions">
+        <a class="header-action header-action--light" href="dashboard.html">Voltar ao Dashboard</a>
+        <a class="header-action" href="relatorios.html" data-action-plan-report-link>Ver Relatório</a>
+      </div>
+    </header>
+
+    <div class="header-divider"></div>
+
+    <main class="dashboard-shell">
+      <aside class="sidebar">
+        <nav class="sidebar__nav" aria-label="Menu principal">
+          <a class="sidebar-link sidebar-link--active" href="dashboard.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8" />
+                <path d="M5.8 18a6.2 6.2 0 0 1 12.4 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+              </svg>
+            </span>
+            <span>Admin</span>
+          </a>
+
+          <a class="sidebar-link" href="setores-funcao.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="8" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
+                <circle cx="16" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.6" />
+                <path d="M4.5 17.5a3.5 3.5 0 0 1 7 0m1-1.3a3 3 0 0 1 5.5 1.3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+              </svg>
+            </span>
+            <span>Setores e Função</span>
+          </a>
+
+          <a class="sidebar-link" href="formularios.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M8 5.5h8M8 9.5h8M8 13.5h5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+                <rect x="6" y="4" width="12" height="16" rx="2.1" fill="none" stroke="currentColor" stroke-width="1.7" />
+              </svg>
+            </span>
+            <span>Formulários</span>
+          </a>
+
+          <a class="sidebar-link" href="relatorios.html">
+            <span class="sidebar-link__icon">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M7 6.5h10M7 10.5h10M7 14.5h6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+                <path d="M6.5 4h7L18 8.5V18a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
+              </svg>
+            </span>
+            <span>Relatórios</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__footer">
+          <div class="user-chip">
+            <div class="user-chip__avatar">A</div>
+            <div class="user-chip__meta">
+              <strong>Admin Principal</strong>
+              <span data-user-email>admin@avaliiesst.com</span>
+            </div>
+          </div>
+          <button class="logout-button" type="button" data-logout aria-label="Sair">
+            <svg viewBox="0 0 24 24" role="presentation">
+              <path d="M10 7H7.5A1.5 1.5 0 0 0 6 8.5v7A1.5 1.5 0 0 0 7.5 17H10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
+              <path d="m13 15 3-3-3-3M16 12H9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <section class="dashboard-main">
+        <section class="section-banner">
+          <h2 data-action-plan-scope-title>Plano de Ação do Escopo</h2>
+        </section>
+
+        <section class="metrics-grid action-plan-metrics">
+          <article class="metric-card">
+            <div class="metric-card__top">
+              <span class="metric-card__title">Empresa</span>
+            </div>
+            <strong class="metric-card__value action-plan-metric-text" data-action-plan-company-name>--</strong>
+            <span class="metric-card__hint metric-card__hint--blue">Contexto atual do plano.</span>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-card__top">
+              <span class="metric-card__title">Escopo</span>
+            </div>
+            <strong class="metric-card__value action-plan-metric-text" data-action-plan-scope-name>--</strong>
+            <span class="metric-card__hint metric-card__hint--blue" data-action-plan-period-label>Período atual.</span>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-card__top">
+              <span class="metric-card__title">Risco Atual</span>
+            </div>
+            <strong class="metric-card__value action-plan-metric-text" data-action-plan-risk-label>--</strong>
+            <span class="metric-card__hint metric-card__hint--red" data-action-plan-risk-index>Índice consolidado.</span>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-card__top">
+              <span class="metric-card__title">Ações Cadastradas</span>
+            </div>
+            <strong class="metric-card__value" data-action-plan-total-items>0</strong>
+            <span class="metric-card__hint metric-card__hint--green">Essas ações passam a aparecer no relatório.</span>
+          </article>
+        </section>
+
+        <section class="companies-panel action-plan-editor-panel">
+          <div class="panel__header action-plan-editor-panel__header">
+            <div>
+              <h2 data-action-plan-form-title>Nova Ação</h2>
+              <p>Cadastre ou edite as ações do plano para este escopo. O que for salvo aqui será usado no preview e nas exportações do relatório.</p>
+            </div>
+
+            <button class="header-action header-action--light" type="button" data-action-plan-new>
+              Nova Ação
+            </button>
+          </div>
+
+          <form class="action-plan-form" data-action-plan-form novalidate>
+            <input type="hidden" data-action-plan-item-id />
+
+            <div class="company-builder__grid action-plan-form__grid">
+              <label class="company-builder__field company-builder__field--wide">
+                <span>Fator de risco</span>
+                <input type="text" data-action-plan-factor placeholder="Ex.: Sobrecarga de tarefas e prazos" />
+              </label>
+
+              <label class="company-builder__field company-builder__field--wide action-plan-field">
+                <span>Ação recomendada</span>
+                <textarea rows="4" data-action-plan-text placeholder="Descreva a ação que será executada para reduzir o risco identificado."></textarea>
+              </label>
+
+              <label class="company-builder__field">
+                <span>Prazo</span>
+                <input type="text" data-action-plan-deadline placeholder="Ex.: 30 dias" />
+              </label>
+
+              <label class="company-builder__field">
+                <span>Status no relatório</span>
+                <select data-action-plan-status></select>
+              </label>
+
+              <label class="company-builder__field">
+                <span>Responsável</span>
+                <input type="text" data-action-plan-responsible placeholder="Ex.: RH / Gestor da área" />
+              </label>
+
+              <label class="company-builder__field company-builder__field--wide action-plan-field">
+                <span>Observações</span>
+                <textarea rows="3" data-action-plan-notes placeholder="Informações complementares, evidências ou observações da ação."></textarea>
+              </label>
+            </div>
+
+            <p class="stack-feedback" data-action-plan-feedback aria-live="polite"></p>
+
+            <div class="form-builder__actions">
+              <button class="form-builder__ghost" type="button" data-action-plan-cancel>Cancelar edição</button>
+              <button class="form-builder__primary" type="submit">Salvar ação</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="table-panel action-plan-list-panel">
+          <div class="panel__header">
+            <div>
+              <h2>Ações Salvas</h2>
+              <p>Esses itens são os que vão aparecer no plano de ação do relatório desta empresa e deste escopo.</p>
+            </div>
+          </div>
+
+          <div class="action-plan-list" data-action-plan-list></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="api-client.js?v=20260421u2"></script>
+    <script src="dashboard.js?v=20260421ort1"></script>
+    <script src="action-plan-editor.js?v=20260421ort1"></script>
+  </body>
+</html>

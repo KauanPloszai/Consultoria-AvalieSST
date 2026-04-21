@@ -46,6 +46,9 @@ function current_user(): ?array
         'id' => (int) ($user['id'] ?? 0),
         'name' => (string) ($user['name'] ?? ''),
         'email' => (string) ($user['email'] ?? ''),
+        'role' => normalize_user_role((string) ($user['role'] ?? 'admin')),
+        'companyId' => isset($user['companyId']) ? (int) $user['companyId'] : null,
+        'companyName' => isset($user['companyName']) ? (string) $user['companyName'] : '',
     ];
 }
 
@@ -61,6 +64,88 @@ function require_auth(): array
     }
 
     return $user;
+}
+
+function normalize_user_role(?string $role): string
+{
+    return $role === 'company' ? 'company' : 'admin';
+}
+
+function is_admin_user(?array $user): bool
+{
+    return is_array($user) && normalize_user_role((string) ($user['role'] ?? 'admin')) === 'admin';
+}
+
+function is_company_user(?array $user): bool
+{
+    return is_array($user) && normalize_user_role((string) ($user['role'] ?? 'admin')) === 'company';
+}
+
+function require_role(array $allowedRoles): array
+{
+    $user = require_auth();
+    $normalizedRoles = array_map('normalize_user_role', $allowedRoles);
+
+    if (!in_array($user['role'], $normalizedRoles, true)) {
+        send_json(403, [
+            'success' => false,
+            'message' => 'Voce nao tem permissao para acessar este recurso.',
+        ]);
+    }
+
+    return $user;
+}
+
+function require_admin(): array
+{
+    return require_role(['admin']);
+}
+
+function require_company_scope(array $user, int $companyId, bool $allowEmpty = false): void
+{
+    if ($companyId <= 0) {
+        if ($allowEmpty) {
+            return;
+        }
+
+        send_json(422, [
+            'success' => false,
+            'message' => 'Empresa invalida.',
+        ]);
+    }
+
+    if (is_admin_user($user)) {
+        return;
+    }
+
+    $userCompanyId = (int) ($user['companyId'] ?? 0);
+
+    if ($userCompanyId <= 0 || $userCompanyId !== $companyId) {
+        send_json(403, [
+            'success' => false,
+            'message' => 'Voce so pode acessar os dados da empresa vinculada ao seu usuario.',
+        ]);
+    }
+}
+
+function resolve_company_scope_filter(array $user, int $companyId = 0): ?int
+{
+    if (is_admin_user($user)) {
+        return $companyId > 0 ? $companyId : null;
+    }
+
+    $userCompanyId = (int) ($user['companyId'] ?? 0);
+
+    if ($companyId > 0) {
+        require_company_scope($user, $companyId);
+    }
+
+    return $userCompanyId > 0 ? $userCompanyId : null;
+}
+
+function user_role_label(string $role): string
+{
+    return normalize_user_role($role) === 'company' ? 'Empresa' : 'Admin';
 }
 
 function pbkdf2_hash(string $password, string $salt, int $iterations): string
@@ -142,6 +227,18 @@ function generate_access_session_public_id(PDO $pdo): string
     return sprintf('SES-%04d', $lastId + 1001);
 }
 
+function generate_access_link_token(PDO $pdo): string
+{
+    do {
+        $token = strtolower(bin2hex(random_bytes(12)));
+        $statement = $pdo->prepare('SELECT id FROM employee_access_codes WHERE access_link_token = :token LIMIT 1');
+        $statement->execute(['token' => $token]);
+        $exists = $statement->fetch();
+    } while ($exists);
+
+    return $token;
+}
+
 function client_ip_address(): string
 {
     $candidates = [
@@ -186,4 +283,68 @@ function mask_ip_address(string $ipAddress): string
 function access_status_label(string $status): string
 {
     return $status === 'done' ? 'Concluida' : 'Em Andamento';
+}
+
+function current_scheme(): string
+{
+    $https = $_SERVER['HTTPS'] ?? '';
+    return ($https === 'on' || $https === '1') ? 'https' : 'http';
+}
+
+function app_base_path(): string
+{
+    $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+
+    if ($scriptName === '') {
+        return '';
+    }
+
+    $basePath = dirname(dirname($scriptName));
+
+    if ($basePath === '.' || $basePath === '/' || $basePath === '\\') {
+        return '';
+    }
+
+    return rtrim(str_replace('\\', '/', $basePath), '/');
+}
+
+function app_base_url(): string
+{
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    return current_scheme() . '://' . $host . app_base_path();
+}
+
+function build_employee_access_url(string $accessLinkToken): string
+{
+    return app_base_url() . '/acesso-funcionario.html?token=' . rawurlencode($accessLinkToken);
+}
+
+function answer_average_to_percent(float $average): int
+{
+    return (int) max(0, min(100, round(($average / 5) * 100)));
+}
+
+function risk_level_from_average(float $average): array
+{
+    if ($average >= 4.2) {
+        return [
+            'label' => 'Risco Alto',
+            'slug' => 'high',
+            'color' => '#ef5656',
+        ];
+    }
+
+    if ($average >= 3.2) {
+        return [
+            'label' => 'Risco Moderado',
+            'slug' => 'medium',
+            'color' => '#f4a31d',
+        ];
+    }
+
+    return [
+        'label' => 'Risco Baixo',
+        'slug' => 'low',
+        'color' => '#18a35d',
+    ];
 }

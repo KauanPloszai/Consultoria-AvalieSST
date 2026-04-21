@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AvaliESST | Geracao de Acesso</title>
-    <link rel="stylesheet" href="dashboard.css" />
+    <title>AvaliESST | Geração de Acesso</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260421u5" />
   </head>
   <body class="dashboard-body">
     <header class="app-header">
@@ -13,8 +13,8 @@
       </div>
 
       <div class="app-header__title">
-        <span>Admin &gt; Geracao de Acesso</span>
-        <h1>Geracao de Acesso</h1>
+        <span>Admin &gt; Geração de Acesso</span>
+        <h1>Geração de Acesso</h1>
       </div>
     </header>
 
@@ -41,7 +41,7 @@
                 <path d="M4.5 17.5a3.5 3.5 0 0 1 7 0m1-1.3a3 3 0 0 1 5.5 1.3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.6" />
               </svg>
             </span>
-            <span>Setores e Funcao</span>
+            <span>Setores e Função</span>
           </a>
 
           <a class="sidebar-link" href="formularios.html">
@@ -51,7 +51,7 @@
                 <rect x="6" y="4" width="12" height="16" rx="2.1" fill="none" stroke="currentColor" stroke-width="1.7" />
               </svg>
             </span>
-            <span>Formularios</span>
+            <span>Formulários</span>
           </a>
 
           <a class="sidebar-link" href="relatorios.html">
@@ -61,7 +61,7 @@
                 <path d="M6.5 4h7L18 8.5V18a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7" />
               </svg>
             </span>
-            <span>Relatorios</span>
+            <span>Relatórios</span>
           </a>
         </nav>
 
@@ -83,202 +83,277 @@
       </aside>
 
       <section class="dashboard-main">
-        <section class="access-layout">
-          <div class="access-sidebar">
-            <article class="stack-card">
-              <h2 class="stack-card__title">Configuracao do codigo da empresa</h2>
+        <section class="overview-grid access-overview-grid" aria-label="Resumo da geração de acesso">
+          <article class="overview-card">
+            <span class="overview-card__icon overview-card__icon--blue">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <rect x="7" y="5" width="10" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.7" />
+                <path d="M10 9h4M10 12h4M10 15h2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+              </svg>
+            </span>
+            <div class="overview-card__copy">
+              <strong data-access-total-companies>0</strong>
+              <span>Total de Empresas</span>
+            </div>
+          </article>
 
-              <form class="stack-form" data-access-builder>
-                <label class="stack-field">
-                  <span>Empresa <strong>*</strong></span>
-                  <div class="field-shell">
-                    <select data-access-company></select>
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                    </svg>
-                  </div>
-                </label>
+          <article class="overview-card">
+            <span class="overview-card__icon overview-card__icon--green">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="m7.5 12.5 3 3 6-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+              </svg>
+            </span>
+            <div class="overview-card__copy">
+              <strong data-access-companies-with-links>0</strong>
+              <span>Empresas com Formulários</span>
+            </div>
+          </article>
 
-                <label class="stack-field">
-                  <span>Formulario <strong>*</strong></span>
-                  <div class="field-shell">
-                    <select data-access-form></select>
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                    </svg>
-                  </div>
-                </label>
+          <article class="overview-card">
+            <span class="overview-card__icon overview-card__icon--violet">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M12 5v9m0 0 3-3m-3 3-3-3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                <path d="M6.5 16v1.5A1.5 1.5 0 0 0 8 19h8a1.5 1.5 0 0 0 1.5-1.5V16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+              </svg>
+            </span>
+            <div class="overview-card__copy">
+              <strong data-access-active-codes>0</strong>
+              <span>Códigos Ativos</span>
+            </div>
+          </article>
 
-                <label class="stack-field">
-                  <span>Escopo (Setor/Funcao) <strong>*</strong></span>
-                  <div class="field-shell">
-                    <select data-access-scope>
-                      <option value="Todos os setores (Codigo Global)">Todos os setores (Codigo Global)</option>
-                      <option value="Administrativo">Administrativo</option>
-                      <option value="Operacional">Operacional</option>
-                      <option value="Recursos Humanos">Recursos Humanos</option>
-                      <option value="Tecnologia">Tecnologia</option>
-                    </select>
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                    </svg>
-                  </div>
-                </label>
+          <article class="overview-card">
+            <span class="overview-card__icon overview-card__icon--red">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <circle cx="8" cy="9" r="2.2" fill="none" stroke="currentColor" stroke-width="1.7" />
+                <circle cx="16" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.7" />
+                <path d="M4.6 17.5a3.4 3.4 0 0 1 6.8 0m1.2-1.2a3 3 0 0 1 5.4 1.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+              </svg>
+            </span>
+            <div class="overview-card__copy">
+              <strong data-access-total-sessions>0</strong>
+              <span>Total de Acessos</span>
+            </div>
+          </article>
+        </section>
 
-                <label class="stack-field">
-                  <span>Validade do codigo (Data/Hora) <strong>*</strong></span>
-                  <div class="field-shell">
-                    <input type="datetime-local" data-access-expires-at />
-                    <svg viewBox="0 0 24 24" role="presentation">
-                      <rect x="5" y="6.5" width="14" height="12.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.7" />
-                      <path d="M8 4.5v4M16 4.5v4M5 10.5h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
-                    </svg>
-                  </div>
-                  <span class="field-help">Apos esta data, o codigo nao podera mais ser utilizado.</span>
-                </label>
+        <section class="companies-panel access-directory-panel">
+          <div class="companies-toolbar">
+            <div class="companies-toolbar__left">
+              <label class="search-field">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <circle cx="11" cy="11" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                  <path d="m15.5 15.5 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+                </svg>
+                <input type="search" placeholder="Buscar por nome da empresa..." data-access-company-search />
+              </label>
+            </div>
 
-                <p class="stack-feedback" data-access-feedback aria-live="polite"></p>
-
-                <button class="primary-block" type="submit">Gerar Codigo Unico</button>
-              </form>
-            </article>
-
-            <article class="code-card" data-active-code-card>
-              <div class="code-card__head">
-                <span class="code-card__status" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <path d="m7.5 12.5 3 3 6-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-                  </svg>
-                </span>
-                <div class="code-card__copy">
-                  <strong data-active-code-title>Codigo da Empresa Ativo</strong>
-                  <span data-active-code-validity>Nenhum codigo ativo selecionado.</span>
-                  <small data-active-code-meta>Selecione uma empresa para gerenciar o acesso.</small>
-                </div>
-              </div>
-
-              <div class="code-label">Codigo Unico de Acesso</div>
-              <div class="code-box">
-                <span data-active-code-value>--</span>
-                <button class="code-box__copy" type="button" data-copy-access-code aria-label="Copiar codigo">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.7" />
-                    <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.7" />
-                  </svg>
-                </button>
-              </div>
-
-              <div class="code-actions">
-                <button class="ghost-button" type="button" data-regenerate-access-code>
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <path d="M18 10a6 6 0 1 0 1.2 5.2M18 10V5.8m0 4.2h-4.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                  </svg>
-                  Regenerar Codigo
-                </button>
-                <button class="icon-danger" type="button" data-revoke-access-code aria-label="Revogar codigo">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8" />
-                    <path d="M8 8l8 8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
-                  </svg>
-                </button>
-              </div>
-            </article>
+            <div class="companies-toolbar__right">
+              <button class="toolbar-refresh" type="button" data-refresh-access-directory aria-label="Atualizar">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path d="M18 10a6 6 0 1 0 1.2 5.2M18 10V5.8m0 4.2h-4.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <div class="access-main">
-            <div class="access-topbar">
-              <h2>Historico de Uso do Codigo</h2>
-              <div class="section-tools">
-                <label class="search-button">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <circle cx="11" cy="11" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8" />
-                    <path d="m15.5 15.5 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
-                  </svg>
-                  <input type="search" placeholder="Buscar..." data-access-history-search />
-                </label>
-                <button class="export-button" type="button" data-export-access-history>
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <path d="M12 5v9m0 0 3-3m-3 3-3-3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-                    <path d="M6.5 16v1.5A1.5 1.5 0 0 0 8 19h8a1.5 1.5 0 0 0 1.5-1.5V16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
-                  </svg>
-                  Exportar
-                </button>
-              </div>
+          <div class="company-table company-table--access-directory">
+            <div class="company-table__head">
+              <span></span>
+              <span>Empresa</span>
+              <span>Formulários Vinculados</span>
+              <span>Códigos Ativos</span>
+              <span>Acessos</span>
+              <span>Ações</span>
             </div>
 
-            <section class="mini-stat-grid">
-              <article class="mini-stat">
-                <span class="mini-stat__icon mini-stat__icon--blue">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <circle cx="8" cy="9" r="2.2" fill="none" stroke="currentColor" stroke-width="1.7" />
-                    <circle cx="16" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.7" />
-                    <path d="M4.6 17.5a3.4 3.4 0 0 1 6.8 0m1.2-1.2a3 3 0 0 1 5.4 1.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
-                  </svg>
-                </span>
-                <div class="mini-stat__copy">
-                  <span>Total de Acessos</span>
-                  <strong data-access-total>0</strong>
-                </div>
-              </article>
+            <div class="company-table__body" data-access-company-table-body></div>
+          </div>
 
-              <article class="mini-stat">
-                <span class="mini-stat__icon mini-stat__icon--green">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <path d="m7.5 12.5 3 3 6-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-                  </svg>
-                </span>
-                <div class="mini-stat__copy">
-                  <span>Avaliacoes Concluidas</span>
-                  <strong data-access-completed>0</strong>
-                </div>
-              </article>
-
-              <article class="mini-stat">
-                <span class="mini-stat__icon mini-stat__icon--orange">
-                  <svg viewBox="0 0 24 24" role="presentation">
-                    <path d="M12 5.5a6.5 6.5 0 1 0 6.5 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
-                    <circle cx="18.5" cy="12" r="1" fill="currentColor" />
-                  </svg>
-                </span>
-                <div class="mini-stat__copy">
-                  <span>Em Andamento</span>
-                  <strong data-access-pending>0</strong>
-                </div>
-              </article>
-            </section>
-
-            <section class="access-table">
-              <div class="access-table__head">
-                <span>SESSAO ID</span>
-                <span>DATA/HORA DE ACESSO</span>
-                <span>IP (OCULTO)</span>
-                <span>STATUS DA AVALIACAO</span>
-                <span></span>
-              </div>
-
-              <div class="access-table__body" data-access-history-body></div>
-            </section>
-
-            <div class="companies-footer">
-              <span data-access-history-results>Mostrando 0 a 0 de 0 acessos</span>
-              <div class="pagination" data-access-history-pagination>
-                <button type="button" disabled>Anterior</button>
-                <button class="is-active" type="button">1</button>
-                <button type="button" disabled>Proxima</button>
-              </div>
-            </div>
-
-            <div class="page-foot">
-              <button class="footer-link" type="button">Suporte Tecnico</button>
-              <button class="footer-link" type="button">Documentacao da API</button>
+          <div class="companies-footer">
+            <span data-access-company-results>Mostrando 0 a 0 de 0 resultados</span>
+            <div class="pagination" data-access-company-pagination>
+              <button type="button" disabled>Anterior</button>
+              <button class="is-active" type="button">1</button>
+              <button type="button" disabled>Próxima</button>
             </div>
           </div>
         </section>
+
+        <section class="companies-panel access-history-panel">
+          <div class="access-topbar access-topbar--panel">
+            <h2>Histórico de Uso do Código</h2>
+            <div class="section-tools">
+              <label class="search-button">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <circle cx="11" cy="11" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                  <path d="m15.5 15.5 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+                </svg>
+                <input type="search" placeholder="Buscar no histórico..." data-access-history-search />
+              </label>
+              <button class="export-button" type="button" data-export-access-history>
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path d="M12 5v9m0 0 3-3m-3 3-3-3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                  <path d="M6.5 16v1.5A1.5 1.5 0 0 0 8 19h8a1.5 1.5 0 0 0 1.5-1.5V16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+                </svg>
+                Exportar
+              </button>
+            </div>
+          </div>
+
+          <section class="mini-stat-grid">
+            <article class="mini-stat">
+              <span class="mini-stat__icon mini-stat__icon--blue">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <circle cx="8" cy="9" r="2.2" fill="none" stroke="currentColor" stroke-width="1.7" />
+                  <circle cx="16" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.7" />
+                  <path d="M4.6 17.5a3.4 3.4 0 0 1 6.8 0m1.2-1.2a3 3 0 0 1 5.4 1.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+                </svg>
+              </span>
+              <div class="mini-stat__copy">
+                <span>Total de Acessos</span>
+                <strong data-access-total>0</strong>
+              </div>
+            </article>
+
+            <article class="mini-stat">
+              <span class="mini-stat__icon mini-stat__icon--green">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path d="m7.5 12.5 3 3 6-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                </svg>
+              </span>
+              <div class="mini-stat__copy">
+                <span>Avaliações Concluídas</span>
+                <strong data-access-completed>0</strong>
+              </div>
+            </article>
+
+            <article class="mini-stat">
+              <span class="mini-stat__icon mini-stat__icon--orange">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path d="M12 5.5a6.5 6.5 0 1 0 6.5 6.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+                  <circle cx="18.5" cy="12" r="1" fill="currentColor" />
+                </svg>
+              </span>
+              <div class="mini-stat__copy">
+                <span>Em Andamento</span>
+                <strong data-access-pending>0</strong>
+              </div>
+            </article>
+          </section>
+
+          <section class="access-table">
+            <div class="access-table__head">
+              <span>SESSÃO ID</span>
+              <span>EMPRESA / FORMULÁRIO</span>
+              <span>DATA/HORA DE ACESSO</span>
+              <span>STATUS DA AVALIAÇÃO</span>
+              <span></span>
+            </div>
+
+            <div class="access-table__body" data-access-history-body></div>
+          </section>
+
+          <div class="companies-footer">
+            <span data-access-history-results>Mostrando 0 a 0 de 0 acessos</span>
+            <div class="pagination" data-access-history-pagination>
+              <button type="button" disabled>Anterior</button>
+              <button class="is-active" type="button">1</button>
+              <button type="button" disabled>Próxima</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="page-foot">
+          <button class="footer-link" type="button">Suporte Técnico</button>
+          <button class="footer-link" type="button">Documentação da API</button>
+        </div>
       </section>
     </main>
 
-    <script src="api-client.js"></script>
-    <script src="dashboard.js"></script>
-    <script src="geracao-acesso.js"></script>
+    <section class="form-modal access-detail-modal" data-access-detail-modal hidden>
+      <div class="form-modal__backdrop" data-close-access-detail></div>
+
+      <div class="form-modal__dialog access-detail-modal__dialog">
+        <header class="form-modal__header">
+          <div>
+            <span class="form-modal__eyebrow">Geração de acesso da empresa</span>
+            <h2 data-access-detail-title>Empresa selecionada</h2>
+          </div>
+
+          <button class="form-modal__close" type="button" data-close-access-detail aria-label="Fechar">
+            <svg viewBox="0 0 24 24" role="presentation">
+              <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+            </svg>
+          </button>
+        </header>
+
+        <div class="access-detail-builder">
+          <section class="form-builder__section access-detail-summary">
+            <div class="access-detail-summary__grid">
+              <article class="access-detail-summary__card">
+                <span>Formulários vinculados</span>
+                <strong data-access-detail-linked-count>0</strong>
+              </article>
+
+              <article class="access-detail-summary__card">
+                <span>Códigos ativos</span>
+                <strong data-access-detail-active-count>0</strong>
+              </article>
+
+              <article class="access-detail-summary__card">
+                <span>Total de acessos</span>
+                <strong data-access-detail-sessions-count>0</strong>
+              </article>
+
+              <article class="access-detail-summary__card">
+                <span>Status da empresa</span>
+                <strong data-access-detail-status>--</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="form-builder__section">
+            <div class="form-builder__section-head">
+              <div>
+                <h3>Configuração padrão do acesso</h3>
+                <p>Esses campos serão usados quando você gerar ou regenerar o QR Code de um formulário vinculado.</p>
+              </div>
+            </div>
+
+            <div class="company-builder__grid">
+              <label class="company-builder__field">
+                <span>Escopo (Setor / Função)</span>
+                <select data-access-detail-scope></select>
+              </label>
+
+              <label class="company-builder__field">
+                <span>Validade do código</span>
+                <input type="datetime-local" data-access-detail-expires-at />
+              </label>
+            </div>
+
+            <p class="form-builder__feedback access-detail-feedback" data-access-detail-feedback aria-live="polite"></p>
+          </section>
+
+          <section class="form-builder__section">
+            <div class="form-builder__section-head">
+              <div>
+                <h3>Formulários vinculados</h3>
+                <p data-access-detail-subtitle>Veja o QR Code, o código manual e o link de resposta de cada formulário vinculado à empresa.</p>
+              </div>
+            </div>
+
+            <div class="access-detail-grid" data-access-detail-forms-grid></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <script src="api-client.js?v=20260421u3"></script>
+    <script src="dashboard.js?v=20260421ort1"></script>
+    <script src="vendor/qrcode.min.js"></script>
+    <script src="geracao-acesso.js?v=20260421ort1"></script>
   </body>
 </html>
