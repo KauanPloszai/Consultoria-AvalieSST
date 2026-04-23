@@ -2456,6 +2456,25 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
   font-weight: 700;
 }
 
+.org-mini-action--danger {
+  border-color: #f1c7c7;
+  background: #fff6f6;
+  color: #d94b4b;
+}
+
+.org-mini-action:hover,
+.org-mini-action:focus-visible {
+  border-color: #b9c8da;
+  background: #f8fbff;
+}
+
+.org-mini-action--danger:hover,
+.org-mini-action--danger:focus-visible {
+  border-color: #e9aaaa;
+  background: #ffecec;
+  color: #c93e3e;
+}
+
 .forms-card {
   background: var(--surface);
   border: 1px solid var(--border);

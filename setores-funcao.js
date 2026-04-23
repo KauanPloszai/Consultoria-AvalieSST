@@ -55,6 +55,21 @@ function findStructureSectorById(sectorId) {
   return structureDashboard.structure?.sectors?.find((sector) => Number(sector.id) === Number(sectorId)) || null;
 }
 
+function findStructureFunctionById(functionId) {
+  for (const sector of structureDashboard.structure?.sectors || []) {
+    const companyFunction = (sector.functions || []).find((item) => Number(item.id) === Number(functionId));
+
+    if (companyFunction) {
+      return {
+        sector,
+        item: companyFunction,
+      };
+    }
+  }
+
+  return null;
+}
+
 function populateStructureCompanyOptions() {
   if (!structureCompanySelect || !structureCompanyModalSelect) {
     return;
@@ -211,6 +226,87 @@ function renderStructureTable() {
     .join("");
 
   structureTable.innerHTML = `${headMarkup}${groupsMarkup}`;
+  decorateStructureActionButtons();
+}
+
+function decorateStructureActionButtons() {
+  if (!structureTable) {
+    return;
+  }
+
+  const actionButtons = structureTable.querySelectorAll("[data-edit-structure]");
+
+  actionButtons.forEach((button) => {
+    const itemType = button.getAttribute("data-edit-structure");
+    const itemId = Number.parseInt(button.getAttribute("data-structure-id") || "0", 10) || 0;
+    const functionMatch = itemType === "function" ? findStructureFunctionById(itemId) : null;
+    const sectorMatch = itemType === "sector" ? findStructureSectorById(itemId) : null;
+    const itemName = functionMatch?.item?.name || sectorMatch?.name || "item";
+
+    button.className = "org-mini-action org-mini-action--danger";
+    button.textContent = "Excluir";
+    button.removeAttribute("data-edit-structure");
+    button.setAttribute("data-delete-structure", itemType || "");
+    button.setAttribute(
+      "aria-label",
+      itemType === "sector" ? `Excluir setor ${itemName}` : `Excluir função ${itemName}`,
+    );
+
+    if (!button.closest(".org-row__actions")) {
+      const actionsWrapper = document.createElement("div");
+      actionsWrapper.className = "org-row__actions";
+      button.parentNode?.replaceChild(actionsWrapper, button);
+      actionsWrapper.appendChild(button);
+    }
+  });
+}
+
+function buildStructureDeleteMessage(itemType, itemId) {
+  if (itemType === "sector") {
+    const sector = findStructureSectorById(itemId);
+
+    if (!sector) {
+      return "";
+    }
+
+    const functionsCount = Array.isArray(sector.functions) ? sector.functions.length : 0;
+
+    if (functionsCount > 0) {
+      return `Deseja excluir o setor "${sector.name}"? As ${functionsCount} função(ões) vinculadas também serão removidas.`;
+    }
+
+    return `Deseja excluir o setor "${sector.name}"?`;
+  }
+
+  const targetFunction = findStructureFunctionById(itemId);
+
+  if (!targetFunction) {
+    return "";
+  }
+
+  return `Deseja excluir a função "${targetFunction.item.name}" do setor "${targetFunction.sector.name}"?`;
+}
+
+async function deleteStructureFromRow(itemType, itemId) {
+  const companyId = Number.parseInt(String(structureDashboard.selectedCompanyId || 0), 10) || 0;
+
+  if (!companyId) {
+    window.alert("Selecione uma empresa antes de excluir um item.");
+    return;
+  }
+
+  const confirmationMessage = buildStructureDeleteMessage(itemType, itemId);
+
+  if (!confirmationMessage || !window.confirm(confirmationMessage)) {
+    return;
+  }
+
+  try {
+    await window.apiClient.delete(`api/company-structure.php?type=${itemType}&id=${itemId}&companyId=${companyId}`);
+    await loadStructure(companyId);
+  } catch (error) {
+    window.alert(error.message || "Não foi possível excluir o item selecionado.");
+  }
 }
 
 async function loadStructure(companyId = 0) {
@@ -334,6 +430,19 @@ function handleStructureTableClick(event) {
     if (sector && structureFeedback) {
       structureFeedback.textContent = `Nova função será criada em ${sector.name}.`;
       structureFeedback.classList.add("is-success");
+    }
+
+    return;
+  }
+
+  const deleteButton = event.target.closest("[data-delete-structure]");
+
+  if (deleteButton) {
+    const itemType = deleteButton.getAttribute("data-delete-structure") || "";
+    const itemId = Number.parseInt(deleteButton.getAttribute("data-structure-id") || "0", 10) || 0;
+
+    if (itemType && itemId > 0) {
+      deleteStructureFromRow(itemType, itemId);
     }
 
     return;
