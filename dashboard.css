@@ -2527,12 +2527,37 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
 
 .company-link-modal__dialog {
   width: min(100%, 760px);
+  height: min(860px, calc(100vh - 32px));
+  height: min(860px, calc(100dvh - 32px));
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
 }
 
 .company-link-builder {
-  padding: 0 24px 24px;
-  display: grid;
+  flex: 1 1 auto;
+  max-height: none;
+  min-height: 0;
+  padding: 18px 24px 96px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
+}
+
+.company-link-builder > .form-builder__actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  margin: 0;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border-soft);
+  border-radius: 0 0 22px 22px;
+  background: #ffffff;
+  box-shadow: 0 -12px 28px rgba(16, 34, 64, 0.1);
 }
 
 .company-link-builder__grid {
@@ -2602,7 +2627,7 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
   border-radius: 12px;
   background: #fff;
   overflow: hidden;
-  max-height: 240px;
+  max-height: min(210px, 24vh);
   overflow-y: auto;
 }
 
@@ -2689,6 +2714,8 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 28px 64px rgba(16, 34, 64, 0.22);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   transform: translateY(12px) scale(0.985);
   opacity: 0;
@@ -2707,6 +2734,7 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
 }
 
 .form-modal__header {
+  flex: 0 0 auto;
   padding: 22px 24px 18px;
   border-bottom: 1px solid var(--border-soft);
   display: flex;
@@ -3881,7 +3909,7 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
 }
 
 .report-signature-lines {
-  padding: 18px 14px 12px;
+  padding: 52px 14px 16px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;

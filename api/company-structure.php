@@ -275,7 +275,7 @@ $user = require_role(['admin', 'company']);
 if ($method === 'GET') {
     $requestedCompanyId = (int) ($_GET['companyId'] ?? 0);
     $scopedCompanyId = resolve_company_scope_filter($user, $requestedCompanyId);
-    $companies = fetch_company_options($pdo, $scopedCompanyId);
+    $companies = fetch_company_options($pdo, is_admin_user($user) ? null : $scopedCompanyId);
     $companyId = $scopedCompanyId ?? 0;
 
     if ($companyId <= 0 && $companies !== []) {
@@ -360,7 +360,10 @@ if ($method === 'POST' || $method === 'PUT') {
         'success' => true,
         'message' => $payload['id'] === null ? 'Item criado com sucesso.' : 'Item atualizado com sucesso.',
         'data' => [
-            'companies' => fetch_company_options($pdo, resolve_company_scope_filter($user, (int) $payload['companyId'])),
+            'companies' => fetch_company_options(
+                $pdo,
+                is_admin_user($user) ? null : resolve_company_scope_filter($user, (int) $payload['companyId'])
+            ),
             'selectedCompanyId' => $payload['companyId'],
             'structure' => fetch_company_structure($pdo, $payload['companyId']),
         ],
@@ -404,7 +407,10 @@ if ($method === 'DELETE') {
         'success' => true,
         'message' => 'Item removido com sucesso.',
         'data' => [
-            'companies' => fetch_company_options($pdo, resolve_company_scope_filter($user, $companyId)),
+            'companies' => fetch_company_options(
+                $pdo,
+                is_admin_user($user) ? null : resolve_company_scope_filter($user, $companyId)
+            ),
             'selectedCompanyId' => $companyId,
             'structure' => fetch_company_structure($pdo, $companyId),
         ],

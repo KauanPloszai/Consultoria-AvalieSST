@@ -27,11 +27,11 @@ function export_xml_escape(string $value): string
 function export_sections_meta(): array
 {
     return [
-        'cover' => 'Capa e Indice',
-        'summary' => 'Resumo Executivo e Metricas Principais',
-        'sectorAnalysis' => 'Analise por Setor',
+        'cover' => 'Capa e Índice',
+        'summary' => 'Resumo Executivo e Métricas Principais',
+        'sectorAnalysis' => 'Análise por Setor',
         'heatmap' => 'Matriz de Risco Geral',
-        'actionPlan' => 'Plano de Acao Recomendado',
+        'actionPlan' => 'Plano de Ação Recomendado',
     ];
 }
 
@@ -988,20 +988,20 @@ function export_pdf_render(array $payload, array $sections): string
             }
 
             if ($actionRows === '') {
-                $actionRows = '<tr><td colspan="5" class="pdf-empty-cell">Nenhuma acao foi gerada para os filtros selecionados.</td></tr>';
+                $actionRows = '<tr><td colspan="5" class="pdf-empty-cell">Nenhuma ação foi gerada para os filtros selecionados.</td></tr>';
             }
 
             $pagesMarkup .= '
               <section class="page">
-                <h2 class="pdf-section-title">Plano de Acao Recomendado</h2>
-                <p class="pdf-paragraph">As acoes abaixo seguem o consolidado atual de respostas. Quando existir plano manual salvo, ele sera priorizado no relatorio.</p>
+                <h2 class="pdf-section-title">Plano de Ação Recomendado</h2>
+                <p class="pdf-paragraph">As ações abaixo seguem o consolidado atual de respostas. Quando existir plano manual salvo, ele será priorizado no relatório.</p>
                 <div class="pdf-card pdf-card--spaced">
                   <table class="pdf-table">
                     <thead>
                       <tr>
                         <th>Fator</th>
                         <th>Setor</th>
-                        <th>Acao recomendada</th>
+                        <th>Ação recomendada</th>
                         <th>Prazo</th>
                         <th>Status</th>
                       </tr>
@@ -1010,10 +1010,10 @@ function export_pdf_render(array $payload, array $sections): string
                   </table>
                 </div>
                 <div class="pdf-signature-card">
-                  <strong>Assinaturas e validacao</strong>
-                  <p>Documento gerado a partir dos dados consolidados do sistema AvalieSST para apoio a tomada de decisao.</p>
+                  <strong>Assinaturas e validação</strong>
+                  <p>Documento gerado a partir dos dados consolidados do sistema AvalieSST para apoio à tomada de decisão.</p>
                   <div class="pdf-signatures">
-                    <div><span></span><strong>Responsavel SST</strong><small>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</small></div>
+                    <div><span></span><strong>Responsável SST</strong><small>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</small></div>
                     <div><span></span><strong>Diretoria</strong><small>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</small></div>
                   </div>
                 </div>
@@ -1471,7 +1471,7 @@ function export_pdf_render(array $payload, array $sections): string
       display: block;
     }
     .pdf-signatures {
-      margin-top: 18px;
+      margin-top: 56px;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 24px;

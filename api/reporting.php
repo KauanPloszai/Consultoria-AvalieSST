@@ -770,6 +770,31 @@ function reporting_build_heatmap_items(array $questionRankings): array
     return $items;
 }
 
+function reporting_selected_sector_label(array $catalog, array $filters): string
+{
+    $selectedSectorIds = array_map('intval', $filters['sectorIds'] ?? []);
+
+    if ($selectedSectorIds === []) {
+        return '';
+    }
+
+    $names = [];
+
+    foreach ($catalog['sectors'] ?? [] as $sector) {
+        if (in_array((int) ($sector['id'] ?? 0), $selectedSectorIds, true)) {
+            $names[] = trim((string) ($sector['name'] ?? ''));
+        }
+    }
+
+    $names = array_values(array_filter($names));
+
+    if ($names === []) {
+        return '';
+    }
+
+    return implode(', ', $names);
+}
+
 function reporting_recommendation_from_question(string $questionText): string
 {
     $normalized = mb_strtolower($questionText, 'UTF-8');
@@ -797,9 +822,9 @@ function reporting_action_plan_status_label(string $statusSlug): string
 {
     $map = [
         'high' => 'Prioridade Alta',
-        'medium' => 'Prioridade Media',
+        'medium' => 'Prioridade Média',
         'monitor' => 'Monitorar',
-        'done' => 'Concluida',
+        'done' => 'Concluída',
     ];
 
     $normalized = trim(strtolower($statusSlug));
@@ -819,9 +844,10 @@ function reporting_action_plan_status_slug(string $statusSlug): string
     return 'monitor';
 }
 
-function reporting_build_action_plan(array $questionRankings): array
+function reporting_build_action_plan(array $questionRankings, string $selectedSectorLabel = ''): array
 {
     $plan = [];
+    $selectedSectorLabel = trim($selectedSectorLabel);
 
     foreach (array_slice($questionRankings, 0, 4) as $item) {
         $average = (float) ($item['average'] ?? 0);
@@ -841,7 +867,7 @@ function reporting_build_action_plan(array $questionRankings): array
 
         $plan[] = [
             'factor' => (string) $item['text'],
-            'sectorName' => (string) ($item['sectorName'] ?: 'Empresa'),
+            'sectorName' => $selectedSectorLabel !== '' ? $selectedSectorLabel : (string) ($item['sectorName'] ?: 'Empresa'),
             'recommendedAction' => reporting_recommendation_from_question((string) $item['text']),
             'deadline' => $deadline,
             'priorityLabel' => $priority,
@@ -1008,7 +1034,8 @@ function reporting_build_payload(PDO $pdo, array $input): array
     $questionRankings = reporting_build_question_rankings($answerRows);
     $heatmapItems = reporting_build_heatmap_items($questionRankings);
     $savedActionPlan = reporting_fetch_saved_action_plan($pdo, $filters);
-    $actionPlan = $savedActionPlan !== [] ? $savedActionPlan : reporting_build_action_plan($questionRankings);
+    $selectedSectorLabel = reporting_selected_sector_label($catalog, $filters);
+    $actionPlan = $savedActionPlan !== [] ? $savedActionPlan : reporting_build_action_plan($questionRankings, $selectedSectorLabel);
     $distribution = reporting_build_distribution($sectorBreakdown);
     $criticalSectors = array_values(array_filter($sectorBreakdown, static function (array $sector): bool {
         return in_array($sector['riskSlug'] ?? '', ['medium', 'high'], true);
