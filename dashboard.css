@@ -3988,6 +3988,11 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
   line-height: 1.55;
 }
 
+.report-note-card--compact {
+  margin-top: 12px;
+  padding: 12px 14px;
+}
+
 .report-inline-badges {
   margin-top: 12px;
   display: flex;
@@ -4132,6 +4137,50 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
 .report-data-table td strong {
   color: #243044;
   font-size: 0.74rem;
+}
+
+.report-muted-row {
+  margin-top: 4px;
+  color: #8a95a6;
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.report-method-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.report-method-list__row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid #e7edf5;
+  border-radius: 12px;
+  background: #fbfcfe;
+  color: #425065;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.report-method-list__row i {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #eff4fb;
+  color: #2e3a4d;
+  font-style: normal;
+  font-size: 0.66rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+.report-method-list__row strong {
+  color: #243044;
 }
 
 .report-pill {

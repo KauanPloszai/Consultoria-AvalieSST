@@ -1,4 +1,5 @@
 const reportCompanySelect = document.querySelector("[data-report-company]");
+const reportFormSelect = document.querySelector("[data-report-form]");
 const reportPeriodSelect = document.querySelector("[data-report-period]");
 const reportSectorList = document.querySelector("[data-report-sector-list]");
 const reportRefreshButton = document.querySelector("[data-report-refresh]");
@@ -69,12 +70,17 @@ function getSelectedSectorIds() {
 function buildReportQuery() {
   const params = new URLSearchParams();
   const companyId = Number.parseInt(reportCompanySelect?.value || "0", 10) || 0;
+  const formId = Number.parseInt(reportFormSelect?.value || "0", 10) || 0;
   const period = reportPeriodSelect?.value || "180";
   const sectorIds = getSelectedSectorIds();
   const sections = getSelectedReportSections();
 
   if (companyId > 0) {
     params.set("companyId", String(companyId));
+  }
+
+  if (formId > 0) {
+    params.set("formId", String(formId));
   }
 
   params.set("period", period);
@@ -128,6 +134,34 @@ function renderReportCompanyOptions(companies, selectedCompanyId) {
 
   if (selectedCompanyId) {
     reportCompanySelect.value = String(selectedCompanyId);
+  }
+}
+
+function renderReportFormOptions(forms, selectedFormId) {
+  if (!reportFormSelect) {
+    return;
+  }
+
+  const normalizedForms = safeArray(forms);
+
+  if (!normalizedForms.length) {
+    reportFormSelect.innerHTML = '<option value="0">Nenhum formulario vinculado</option>';
+    reportFormSelect.value = "0";
+    return;
+  }
+
+  reportFormSelect.innerHTML = normalizedForms
+    .map((form) => {
+      const code = String(form.publicCode || "");
+      const statusLabel = String(form.status || "active") === "inactive" ? "Inativo" : "Ativo";
+      const suffix = code ? ` (${code})` : "";
+
+      return `<option value="${form.id}">${escapeHtml(`${form.name || "Formulario"}${suffix} - ${statusLabel}`)}</option>`;
+    })
+    .join("");
+
+  if (selectedFormId) {
+    reportFormSelect.value = String(selectedFormId);
   }
 }
 
@@ -202,6 +236,185 @@ function buildInlineBadges(items) {
 
 function buildRiskPill(label, slug) {
   return `<span class="report-pill report-pill--${escapeHtml(slug || "neutral")}">${escapeHtml(label || "Sem dados")}</span>`;
+}
+
+function buildMethodologySteps(items) {
+  const normalizedItems = safeArray(items);
+
+  if (!normalizedItems.length) {
+    return '<div class="report-empty-state">Metodologia indisponivel para o filtro atual.</div>';
+  }
+
+  return `
+    <div class="report-method-list">
+      ${normalizedItems
+        .map(
+          (item, index) => `
+            <div class="report-method-list__row">
+              <i>${index + 1}</i>
+              <span>${escapeHtml(item)}</span>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function buildScaleLegend(scale) {
+  const normalizedScale = safeArray(scale);
+
+  if (!normalizedScale.length) {
+    return '<div class="report-empty-state report-empty-state--inline">Escala indisponivel.</div>';
+  }
+
+  return `
+    <div class="report-inline-badges">
+      ${normalizedScale
+        .map(
+          (item) => `
+            <span class="report-inline-badge">
+              ${escapeHtml(`${item.value} = ${item.label}`)}
+            </span>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function buildAppliedQuestionsTable(items) {
+  const normalizedItems = safeArray(items);
+
+  if (!normalizedItems.length) {
+    return '<div class="report-empty-state">Nenhuma pergunta aplicada foi encontrada para este formulario.</div>';
+  }
+
+  return `
+    <div class="report-table-wrap">
+      <table class="report-data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Pergunta aplicada</th>
+            <th>Fator</th>
+            <th>Efeito</th>
+            <th>Probabilidade</th>
+            <th>Resultado</th>
+            <th>Classificacao</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${normalizedItems
+            .map(
+              (item) => `
+                <tr>
+                  <td>${formatInteger(item.position || 0)}</td>
+                  <td>
+                    <strong>${escapeHtml(item.text || "Pergunta")}</strong>
+                    <div class="report-muted-row">${escapeHtml(item.scopeName || item.sectorName || "Empresa")}</div>
+                  </td>
+                  <td>${escapeHtml(item.factorName || "Fator")}</td>
+                  <td>
+                    <strong>${formatInteger(item.effect || 0)}</strong>
+                    <div class="report-muted-row">${escapeHtml(item.effectDescription || "")}</div>
+                  </td>
+                  <td>${formatAverage(item.probability || item.average || 0)}</td>
+                  <td>${formatAverage(item.riskScore || 0)}</td>
+                  <td>${buildRiskPill(item.riskLabel, item.riskSlug)}</td>
+                </tr>
+              `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function buildFactorResultsTable(items) {
+  const normalizedItems = safeArray(items);
+
+  if (!normalizedItems.length) {
+    return '<div class="report-empty-state">Nao ha fatores consolidados suficientes para exibir o calculo do risco.</div>';
+  }
+
+  return `
+    <div class="report-table-wrap">
+      <table class="report-data-table">
+        <thead>
+          <tr>
+            <th>Fator</th>
+            <th>Probabilidade media</th>
+            <th>Efeito fixo</th>
+            <th>Resultado do risco</th>
+            <th>Classificacao</th>
+            <th>PGR</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${normalizedItems
+            .map(
+              (item) => `
+                <tr>
+                  <td>
+                    <strong>${escapeHtml(item.factorName || "Fator")}</strong>
+                    <div class="report-muted-row">${escapeHtml(item.scopeName || item.sectorName || "Empresa")}</div>
+                  </td>
+                  <td>${formatAverage(item.probability || 0)}</td>
+                  <td>
+                    <strong>${formatInteger(item.effect || 0)}</strong>
+                    <div class="report-muted-row">${escapeHtml(item.effectDescription || "")}</div>
+                  </td>
+                  <td>${formatAverage(item.riskScore || 0)}</td>
+                  <td>${buildRiskPill(item.riskLabel, item.riskSlug)}</td>
+                  <td>${escapeHtml(item.pgrLabel || "Sem dados")}</td>
+                </tr>
+              `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function buildFinalConsiderations(data) {
+  const summary = data.summary || {};
+  const factors = safeArray(data.factorResults);
+  const highestFactor = factors[0] || null;
+  const selectedFormName =
+    data.company?.selectedFormName || data.company?.activeFormName || "Formulario nao identificado";
+  const selectedSectors = resolveSelectedSectorNames(data);
+  const sectorsLabel = selectedSectors.length ? selectedSectors.join(", ") : "Todos os setores selecionados";
+
+  if (!Number(summary.answersCount || 0)) {
+    return `
+      <div class="report-note-card">
+        <strong>Consideracoes finais</strong>
+        <p>O formulario ${escapeHtml(selectedFormName)} ainda nao possui respostas concluidas suficientes para gerar uma interpretacao tecnica consolidada.</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="report-note-card">
+      <strong>Consideracoes finais</strong>
+      <p>
+        O relatorio foi consolidado com base nas respostas reais do formulario
+        <strong>${escapeHtml(selectedFormName)}</strong>, considerando o recorte de
+        <strong>${escapeHtml(sectorsLabel)}</strong>. O risco global atual foi classificado como
+        <strong>${escapeHtml(summary.riskLabel || "Sem dados")}</strong>.
+      </p>
+      <p>
+        ${highestFactor
+          ? `O fator de maior impacto foi <strong>${escapeHtml(highestFactor.factorName || "Fator")}</strong>,
+             com resultado ${escapeHtml(formatAverage(highestFactor.riskScore || 0))} e indicacao
+             <strong>${escapeHtml(highestFactor.pgrLabel || "Sem dados")}</strong>.`
+          : "Nenhum fator consolidado foi encontrado para os filtros atuais."}
+      </p>
+    </div>
+  `;
 }
 
 function buildLineChart(series, options = {}) {
@@ -352,6 +565,8 @@ function buildTopQuestionList(items, emptyMessage = "Nenhuma pergunta consolidad
 }
 
 function buildCoverPage(data, pageNumber) {
+  const selectedFormName = data.company?.selectedFormName || data.company?.activeFormName || "Não vinculado";
+
   return `
     <article class="report-page report-page--cover">
       <div class="report-page__topmeta">USO INTERNO / CONFIDENCIAL</div>
@@ -375,7 +590,7 @@ function buildCoverPage(data, pageNumber) {
         </div>
         <div>
           <span>FORMULÁRIO ATIVO</span>
-          <strong>${escapeHtml(data.company?.activeFormName || "Não vinculado")}</strong>
+          <strong>${escapeHtml(selectedFormName)}</strong>
         </div>
         <div>
           <span>DATA DE EMISSÃO</span>
@@ -396,6 +611,7 @@ function buildCoverPage(data, pageNumber) {
 
 function buildIndexPage(data, pageSequence, pageNumber) {
   const sectorNames = resolveSelectedSectorNames(data);
+  const selectedFormName = data.company?.selectedFormName || data.company?.activeFormName || "Consolidado";
 
   return `
     <article class="report-page">
@@ -408,7 +624,7 @@ function buildIndexPage(data, pageSequence, pageNumber) {
           <p>
             Empresa: <strong>${escapeHtml(data.company?.name || "Empresa")}</strong> |
             Período: <strong>${escapeHtml(data.summary?.periodLabel || "Todo o histórico")}</strong> |
-            Formulários analisados: <strong>${escapeHtml(data.company?.activeFormName || "Consolidado")}</strong>
+            Formulário analisado: <strong>${escapeHtml(selectedFormName)}</strong>
           </p>
           ${buildInlineBadges(sectorNames)}
         </div>
@@ -422,6 +638,9 @@ function buildSummaryPage(data, pageNumber) {
   const summary = data.summary || {};
   const completionSeries = buildLineChart(data.completionSeries, { minimumMax: 5 });
   const riskSeries = buildLineChart(data.riskSeries, { minimumMax: 20 });
+  const methodology = data.methodology || {};
+  const appliedQuestions = safeArray(data.appliedQuestions);
+  const selectedFormName = data.company?.selectedFormName || data.company?.activeFormName || "Formulario nao vinculado";
 
   return `
     <article class="report-page">
@@ -450,9 +669,26 @@ function buildSummaryPage(data, pageNumber) {
             <em class="is-green">${formatInteger(summary.totalSessions || 0)} sessões no período</em>
           </article>
           <article class="report-mini-card">
-            <span>SETORES CRÍTICOS</span>
-            <strong class="is-red">${formatInteger(summary.criticalSectorsCount || 0)}</strong>
-            <em class="is-red">Demandam ação prioritária</em>
+            <span>FATORES NO PGR</span>
+            <strong class="is-red">${formatInteger(summary.pgrFactorsCount || 0)}</strong>
+            <em class="is-red">${escapeHtml(summary.pgrLabel || "Sem dados")}</em>
+          </article>
+        </div>
+
+        <div class="report-chart-grid">
+          <article class="report-chart-card">
+            <span class="report-chart-card__title">Metodologia aplicada</span>
+            ${buildMethodologySteps(methodology.formula)}
+          </article>
+
+          <article class="report-chart-card">
+            <span class="report-chart-card__title">Escala de respostas e criterio do PGR</span>
+            ${buildScaleLegend(methodology.scale)}
+            <div class="report-note-card report-note-card--compact">
+              <strong>Formulario considerado</strong>
+              <p>${escapeHtml(selectedFormName)}</p>
+              <p>${escapeHtml(methodology.pgrCriterion || "Itens moderados ou altos devem ser avaliados para o PGR.")}</p>
+            </div>
           </article>
         </div>
 
@@ -482,6 +718,15 @@ function buildSummaryPage(data, pageNumber) {
             )}
           </article>
         </div>
+
+        <div class="report-note-card">
+          <strong>Perguntas aplicadas e calculo da probabilidade</strong>
+          <p>
+            Cada pergunta abaixo mostra o fator psicossocial associado, o efeito fixo utilizado
+            na metodologia e o resultado calculado com base na media real das respostas salvas.
+          </p>
+        </div>
+        ${buildAppliedQuestionsTable(appliedQuestions)}
       </section>
       <span class="report-page__number">Página ${pageNumber}</span>
     </article>
@@ -636,16 +881,58 @@ function buildHeatmapMarkup(items) {
 
 function buildHeatmapPage(data, pageNumber) {
   const heatmapItems = safeArray(data.heatmapItems);
+  const methodology = data.methodology || {};
+  const factorResults = safeArray(data.factorResults);
 
   return `
     <article class="report-page">
       <section class="report-section">
         <h3 class="report-section-title">Matriz de Risco (Heatmap)</h3>
         <p class="report-paragraph">
-          A matriz cruza a recorrência das respostas mais sensíveis com o impacto
-          estimado pelo nível médio de risco. Quanto mais próximo do canto superior
-          direito, maior a prioridade de intervenção.
+          A matriz cruza a probabilidade media das respostas (1 a 5) com o efeito fixo
+          do fator psicossocial. O resultado do risco e calculado por
+          <strong>probabilidade x efeito</strong>, sendo enquadrado na classificacao final
+          da matriz.
         </p>
+
+        <div class="report-chart-grid">
+          <article class="report-chart-card">
+            <span class="report-chart-card__title">Definicao do efeito por fator</span>
+            ${buildFactorResultsTable(
+              safeArray(methodology.factorCatalog).map((factor) => ({
+                factorName: factor.factorName,
+                scopeName: "Referencia metodologica",
+                probability: 0,
+                effect: factor.effect,
+                effectDescription: factor.effectDescription,
+                riskScore: 0,
+                riskLabel: "-",
+                riskSlug: "neutral",
+                pgrLabel: "-",
+              })),
+            )}
+          </article>
+
+          <article class="report-chart-card">
+            <span class="report-chart-card__title">Classificacao da matriz e criterio do PGR</span>
+            <div class="report-method-list">
+              ${safeArray(methodology.matrix)
+                .map(
+                  (item, index) => `
+                    <div class="report-method-list__row">
+                      <i>${index + 1}</i>
+                      <span>
+                        <strong>${escapeHtml(item.range || "")}</strong> -
+                        ${escapeHtml(item.label || "Sem dados")} |
+                        ${escapeHtml(item.pgrLabel || "")}
+                      </span>
+                    </div>
+                  `,
+                )
+                .join("")}
+            </div>
+          </article>
+        </div>
 
         ${
           heatmapItems.length
@@ -666,7 +953,8 @@ function buildHeatmapPage(data, pageNumber) {
                         Probabilidade: ${item.probability} |
                         Impacto: ${item.impact} |
                         Score: ${item.score} |
-                        ${escapeHtml(item.riskLabel)}
+                        ${escapeHtml(item.riskLabel)} |
+                        ${escapeHtml(item.pgrLabel || "Sem dados")}
                       </small>
                     `,
                   )
@@ -674,6 +962,15 @@ function buildHeatmapPage(data, pageNumber) {
               : '<small>Nenhum fator mapeado com base nas respostas atuais.</small>'
           }
         </div>
+
+        <div class="report-note-card">
+          <strong>Resultado consolidado do risco</strong>
+          <p>
+            A tabela abaixo resume a probabilidade media por fator, o efeito fixo aplicado,
+            o resultado do risco, a classificacao final e a indicacao de inclusao no PGR.
+          </p>
+        </div>
+        ${buildFactorResultsTable(factorResults)}
       </section>
       <span class="report-page__number">Página ${pageNumber}</span>
     </article>
@@ -728,6 +1025,8 @@ function buildActionPlanPage(data, pageNumber) {
             `
             : '<div class="report-empty-state">Nenhuma ação foi gerada para os filtros selecionados.</div>'
         }
+
+        ${buildFinalConsiderations(data)}
 
         <div class="report-signature-card">
           <div class="report-signature-card__head">
@@ -815,6 +1114,7 @@ async function loadReportData() {
 
     reportState.data = data;
     renderReportCompanyOptions(data?.options?.companies || [], data?.filters?.companyId || 0);
+    renderReportFormOptions(data?.options?.forms || [], data?.filters?.formId || data?.company?.selectedFormId || 0);
     renderReportSectorList(data?.options?.sectors || [], data?.filters?.sectorIds || []);
     renderReportPreview(data);
 
@@ -839,18 +1139,10 @@ function exportReport(format) {
   const url = `api/report-export.php?format=${format}&${query}`;
 
   if (format === "pdf") {
-    const previewWindow = window.open(url, "_blank");
-
-    if (previewWindow) {
-      window.setTimeout(() => {
-        try {
-          previewWindow.print();
-        } catch (error) {
-          // O navegador pode bloquear a impressao automatica.
-        }
-      }, 900);
-    }
-
+    // A versao PDF abre em uma pagina dedicada, pronta para impressao.
+    // Isso da mais controle ao usuario para salvar em PDF sem depender do
+    // disparo automatico da janela de impressao do navegador.
+    window.open(url, "_blank");
     return;
   }
 
@@ -860,12 +1152,17 @@ function exportReport(format) {
 if (reportPreviewArea && reportCompanySelect) {
   reportRefreshButton?.addEventListener("click", loadReportData);
   reportCompanySelect.addEventListener("change", () => {
+    if (reportFormSelect) {
+      reportFormSelect.innerHTML = "";
+    }
+
     if (reportSectorList) {
       reportSectorList.innerHTML = "";
     }
 
     loadReportData();
   });
+  reportFormSelect?.addEventListener("change", loadReportData);
   reportPeriodSelect?.addEventListener("change", loadReportData);
   reportSectorList?.addEventListener("change", loadReportData);
   reportSectionInputs.forEach((input) => {

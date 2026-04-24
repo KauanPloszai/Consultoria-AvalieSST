@@ -143,6 +143,261 @@ function reporting_average(int|float $sum, int $count): float
     return round(((float) $sum) / $count, 2);
 }
 
+function reporting_score_to_percent(?float $score): int
+{
+    $normalizedScore = (float) ($score ?? 0);
+
+    if ($normalizedScore <= 0) {
+        return 0;
+    }
+
+    return (int) max(0, min(100, round(($normalizedScore / 25) * 100)));
+}
+
+function reporting_find_company(array $companies, int $companyId): array
+{
+    foreach ($companies as $company) {
+        if ((int) ($company['id'] ?? 0) === $companyId) {
+            return $company;
+        }
+    }
+
+    return [
+        'id' => 0,
+        'name' => 'Empresa',
+        'status' => 'active',
+        'cnpj' => '',
+        'employees' => 0,
+        'activeFormId' => null,
+        'activeFormName' => '',
+        'activeFormCode' => '',
+    ];
+}
+
+function reporting_fetch_company_forms(PDO $pdo, int $companyId): array
+{
+    if ($companyId <= 0) {
+        return [];
+    }
+
+    $statement = $pdo->prepare(
+        'SELECT
+             f.id,
+             f.public_code,
+             f.name,
+             f.status,
+             CASE WHEN c.active_form_id = f.id THEN 1 ELSE 0 END AS is_primary
+         FROM company_form_links cfl
+         INNER JOIN forms f ON f.id = cfl.form_id
+         INNER JOIN companies c ON c.id = cfl.company_id
+         WHERE cfl.company_id = :company_id
+         ORDER BY is_primary DESC, f.name ASC, f.id ASC'
+    );
+    $statement->execute(['company_id' => $companyId]);
+
+    $forms = [];
+
+    foreach ($statement->fetchAll() as $row) {
+        $forms[] = [
+            'id' => (int) $row['id'],
+            'publicCode' => (string) ($row['public_code'] ?? ''),
+            'name' => (string) ($row['name'] ?? ''),
+            'status' => (string) ($row['status'] ?? 'active'),
+            'isPrimary' => (int) ($row['is_primary'] ?? 0) === 1,
+        ];
+    }
+
+    return $forms;
+}
+
+function reporting_resolve_form_filter(array $companyForms, array $company, array $input): array
+{
+    $requestedFormId = (int) ($input['formId'] ?? 0);
+    $activeFormId = (int) ($company['activeFormId'] ?? 0);
+    $fallback = null;
+
+    foreach ($companyForms as $form) {
+        if ($fallback === null) {
+            $fallback = $form;
+        }
+
+        if ($requestedFormId > 0 && (int) ($form['id'] ?? 0) === $requestedFormId) {
+            return $form;
+        }
+    }
+
+    if ($activeFormId > 0) {
+        foreach ($companyForms as $form) {
+            if ((int) ($form['id'] ?? 0) === $activeFormId) {
+                return $form;
+            }
+        }
+    }
+
+    return $fallback ?? [
+        'id' => 0,
+        'publicCode' => '',
+        'name' => '',
+        'status' => 'inactive',
+        'isPrimary' => false,
+    ];
+}
+
+function reporting_normalize_text(string $value): string
+{
+    $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+
+    if (!is_string($normalized) || $normalized === '') {
+        $normalized = $value;
+    }
+
+    return mb_strtolower($normalized, 'UTF-8');
+}
+
+function reporting_factor_catalog(): array
+{
+    // Fixed effects are defined by psychosocial factor and reused by report, preview and exports.
+    return [
+        'demands' => [
+            'factorKey' => 'demands',
+            'factorName' => 'Demandas Psicossociais',
+            'effect' => 5,
+            'effectDescription' => 'Impacto alto por envolver ritmo, sobrecarga, prazos e pressao operacional.',
+            'keywords' => ['carga', 'prazo', 'pressao', 'demanda', 'sobrecarga', 'ritmo', 'muitas informacoes', 'trabalho'],
+        ],
+        'recovery' => [
+            'factorKey' => 'recovery',
+            'factorName' => 'Recuperacao e Pausas',
+            'effect' => 4,
+            'effectDescription' => 'Impacto relevante sobre recuperacao fisica e mental durante a jornada.',
+            'keywords' => ['pausa', 'descanso', 'recuperacao', 'jornada'],
+        ],
+        'support' => [
+            'factorKey' => 'support',
+            'factorName' => 'Apoio Social e Lideranca',
+            'effect' => 4,
+            'effectDescription' => 'Impacto relevante na seguranca psicossocial por depender de apoio, escuta e feedback.',
+            'keywords' => ['apoio', 'lider', 'lideranca', 'feedback'],
+        ],
+        'climate' => [
+            'factorKey' => 'climate',
+            'factorName' => 'Clima Organizacional',
+            'effect' => 4,
+            'effectDescription' => 'Impacto relevante na cooperacao, convivio e estabilidade emocional da equipe.',
+            'keywords' => ['clima', 'dialogo', 'equipe', 'conflito', 'desentendimento'],
+        ],
+        'clarity' => [
+            'factorKey' => 'clarity',
+            'factorName' => 'Clareza de Papel e Prioridades',
+            'effect' => 3,
+            'effectDescription' => 'Impacto moderado sobre organizacao do trabalho, autonomia e direcionamento.',
+            'keywords' => ['clareza', 'prioridade', 'papel', 'autonomia', 'decis'],
+        ],
+        'engagement' => [
+            'factorKey' => 'engagement',
+            'factorName' => 'Engajamento e Sentido do Trabalho',
+            'effect' => 3,
+            'effectDescription' => 'Impacto moderado relacionado a motivacao, reconhecimento e proposito percebido.',
+            'keywords' => ['engaj', 'sentido', 'motiv', 'reconhecimento'],
+        ],
+        'general' => [
+            'factorKey' => 'general',
+            'factorName' => 'Fator Psicossocial Geral',
+            'effect' => 3,
+            'effectDescription' => 'Impacto moderado aplicado quando a pergunta nao se encaixa em uma categoria especifica.',
+            'keywords' => [],
+        ],
+    ];
+}
+
+function reporting_question_profile(string $questionText): array
+{
+    $normalized = reporting_normalize_text($questionText);
+    $catalog = reporting_factor_catalog();
+
+    foreach ($catalog as $key => $profile) {
+        foreach ($profile['keywords'] as $keyword) {
+            if ($keyword !== '' && str_contains($normalized, $keyword)) {
+                return $profile;
+            }
+        }
+    }
+
+    return $catalog['general'];
+}
+
+function reporting_risk_from_score(?float $score, int $sampleCount = 0): array
+{
+    if ($sampleCount <= 0 || $score === null || $score <= 0) {
+        return array_merge(reporting_empty_risk(), [
+            'includePgr' => false,
+            'pgrLabel' => 'Sem dados',
+            'band' => '',
+            'actionGuidance' => 'Aguardando respostas suficientes para classificacao.',
+        ]);
+    }
+
+    if ($score >= 15) {
+        return [
+            'label' => 'Risco Alto',
+            'slug' => 'high',
+            'color' => '#ef5656',
+            'includePgr' => true,
+            'pgrLabel' => 'Incluir no PGR',
+            'band' => '15 a 25',
+            'actionGuidance' => 'Incluir no PGR com plano imediato e acompanhamento frequente.',
+        ];
+    }
+
+    if ($score >= 7) {
+        return [
+            'label' => 'Risco Moderado',
+            'slug' => 'medium',
+            'color' => '#f4a31d',
+            'includePgr' => true,
+            'pgrLabel' => 'Incluir no PGR',
+            'band' => '7 a 14',
+            'actionGuidance' => 'Incluir no PGR com medidas preventivas formais e monitoramento.',
+        ];
+    }
+
+    return [
+        'label' => 'Risco Baixo',
+        'slug' => 'low',
+        'color' => '#1eb980',
+        'includePgr' => false,
+        'pgrLabel' => 'Monitoramento Interno',
+        'band' => '1 a 6',
+        'actionGuidance' => 'Manter monitoramento interno e rotina preventiva.',
+    ];
+}
+
+function reporting_scope_label_from_row(array $row): string
+{
+    $sectorName = trim((string) ($row['sector_name'] ?? ''));
+    $functionName = trim((string) ($row['function_name'] ?? ''));
+
+    if ($functionName !== '') {
+        return $sectorName !== '' ? $sectorName . ' / ' . $functionName : $functionName;
+    }
+
+    if ($sectorName !== '') {
+        return $sectorName;
+    }
+
+    return 'Empresa';
+}
+
+function reporting_dominant_label(array $counts, string $fallback = ''): string
+{
+    if ($counts === []) {
+        return $fallback;
+    }
+
+    arsort($counts);
+    return (string) (array_key_first($counts) ?? $fallback);
+}
+
 function reporting_build_in_clause(string $prefix, array $ids, array &$params): string
 {
     $placeholders = [];
@@ -282,6 +537,9 @@ function reporting_build_filters(array $input, array $companies): array
         'period' => $period,
         'periodLabel' => reporting_period_label($period),
         'dateFrom' => reporting_period_start($period),
+        'formId' => null,
+        'formLabel' => '',
+        'formCode' => '',
         'sectorId' => $sectorId > 0 ? $sectorId : null,
         'functionId' => $functionId > 0 ? $functionId : null,
         'sectorIds' => $sectorIds,
@@ -295,6 +553,11 @@ function reporting_build_where_clause(array $filters, array &$params): string
     if (($filters['companyId'] ?? 0) > 0) {
         $conditions[] = 'ac.company_id = :company_id';
         $params['company_id'] = (int) $filters['companyId'];
+    }
+
+    if (($filters['formId'] ?? null) !== null) {
+        $conditions[] = 'ac.form_id = :form_id';
+        $params['form_id'] = (int) $filters['formId'];
     }
 
     if (($filters['functionId'] ?? null) !== null) {
@@ -339,6 +602,7 @@ function reporting_fetch_session_rows(PDO $pdo, array $filters): array
              ac.expires_at,
              c.name AS company_name,
              f.name AS form_name,
+             f.public_code AS form_code,
              COALESCE(ac.sector_id, fn.sector_id) AS resolved_sector_id,
              sct.sector_name,
              fn.function_name
@@ -372,6 +636,8 @@ function reporting_fetch_answer_rows(PDO $pdo, array $filters): array
              COALESCE(s.completed_at, s.updated_at, s.started_at) AS event_at,
              ac.company_id,
              ac.form_id,
+             f.name AS form_name,
+             f.public_code AS form_code,
              ac.scope_type,
              ac.scope_label,
              ac.sector_id,
@@ -382,6 +648,7 @@ function reporting_fetch_answer_rows(PDO $pdo, array $filters): array
          FROM access_code_answers a
          INNER JOIN access_code_sessions s ON s.id = a.session_id
          INNER JOIN employee_access_codes ac ON ac.id = s.access_code_id
+         INNER JOIN forms f ON f.id = ac.form_id
          INNER JOIN form_questions fq ON fq.id = a.form_question_id
          LEFT JOIN company_functions fn ON fn.id = ac.function_id
          LEFT JOIN company_sectors sct ON sct.id = COALESCE(ac.sector_id, fn.sector_id)
@@ -394,13 +661,20 @@ function reporting_fetch_answer_rows(PDO $pdo, array $filters): array
     return $statement->fetchAll();
 }
 
-function reporting_build_summary(array $sessionRows, array $answerRows, array $company): array
+function reporting_build_summary(
+    array $sessionRows,
+    array $answerRows,
+    array $company,
+    array $questionRankings,
+    array $factorResults
+): array
 {
     $totalSessions = count($sessionRows);
     $completedSessions = 0;
     $pendingSessions = 0;
-    $answersSum = 0;
     $answersCount = 0;
+    $weightedProbability = 0.0;
+    $weightedEffect = 0.0;
 
     foreach ($sessionRows as $row) {
         if (($row['status'] ?? '') === 'done') {
@@ -410,13 +684,22 @@ function reporting_build_summary(array $sessionRows, array $answerRows, array $c
         }
     }
 
-    foreach ($answerRows as $row) {
-        $answersSum += (int) ($row['answer_value'] ?? 0);
-        $answersCount++;
+    foreach ($questionRankings as $item) {
+        $questionAnswerCount = (int) ($item['answerCount'] ?? 0);
+
+        if ($questionAnswerCount <= 0) {
+            continue;
+        }
+
+        $answersCount += $questionAnswerCount;
+        $weightedProbability += ((float) ($item['probability'] ?? 0)) * $questionAnswerCount;
+        $weightedEffect += ((float) ($item['effect'] ?? 0)) * $questionAnswerCount;
     }
 
-    $overallAverage = reporting_average($answersSum, $answersCount);
-    $overallRisk = reporting_risk_from_average($overallAverage, $answersCount);
+    $overallProbability = $answersCount > 0 ? round($weightedProbability / $answersCount, 2) : 0.0;
+    $overallEffect = $answersCount > 0 ? round($weightedEffect / $answersCount, 2) : 0.0;
+    $overallRiskScore = $answersCount > 0 ? round($overallProbability * $overallEffect, 2) : 0.0;
+    $overallRisk = reporting_risk_from_score($overallRiskScore, $answersCount);
     $participationRate = 0;
     $companyEmployees = (int) ($company['employees'] ?? 0);
 
@@ -433,12 +716,20 @@ function reporting_build_summary(array $sessionRows, array $answerRows, array $c
         'completedSessions' => $completedSessions,
         'pendingSessions' => $pendingSessions,
         'answersCount' => $answersCount,
-        'average' => $overallAverage,
-        'riskIndex' => answer_average_to_percent($overallAverage),
+        'average' => $overallProbability,
+        'effectAverage' => $overallEffect,
+        'riskScore' => $overallRiskScore,
+        'riskIndex' => reporting_score_to_percent($overallRiskScore),
         'riskLabel' => $overallRisk['label'],
         'riskSlug' => $overallRisk['slug'],
+        'pgrIncluded' => (bool) ($overallRisk['includePgr'] ?? false),
+        'pgrLabel' => (string) ($overallRisk['pgrLabel'] ?? 'Sem dados'),
         'participationRate' => $participationRate,
         'complianceRate' => $complianceRate,
+        'totalQuestions' => count($questionRankings),
+        'criticalFactorsCount' => count(array_filter($factorResults, static function (array $factor): bool {
+            return in_array((string) ($factor['riskSlug'] ?? 'neutral'), ['medium', 'high'], true);
+        })),
     ];
 }
 
@@ -563,13 +854,16 @@ function reporting_build_monthly_risk_series(array $answerRows, int $months = 6)
             continue;
         }
 
-        $buckets[$key]['sum'] += (int) ($row['answer_value'] ?? 0);
+        $answerValue = (int) ($row['answer_value'] ?? 0);
+        $effect = (float) ($row['effect'] ?? reporting_question_profile((string) ($row['question_text'] ?? ''))['effect']);
+
+        $buckets[$key]['sum'] += round($answerValue * $effect, 2);
         $buckets[$key]['count']++;
     }
 
     foreach ($buckets as &$bucket) {
-        $average = reporting_average((int) $bucket['sum'], (int) $bucket['count']);
-        $bucket['value'] = answer_average_to_percent($average);
+        $averageScore = reporting_average((float) $bucket['sum'], (int) $bucket['count']);
+        $bucket['value'] = reporting_score_to_percent($averageScore);
         unset($bucket['sum'], $bucket['count']);
     }
     unset($bucket);
@@ -589,13 +883,19 @@ function reporting_build_question_rankings(array $answerRows): array
         }
 
         if (!isset($buckets[$questionId])) {
+            $profile = reporting_question_profile((string) ($row['question_text'] ?? ''));
             $buckets[$questionId] = [
                 'questionId' => $questionId,
                 'position' => (int) ($row['position'] ?? 0),
                 'text' => (string) ($row['question_text'] ?? ''),
+                'factorKey' => (string) ($profile['factorKey'] ?? 'general'),
+                'factorName' => (string) ($profile['factorName'] ?? 'Fator Psicossocial Geral'),
+                'effect' => (int) ($profile['effect'] ?? 3),
+                'effectDescription' => (string) ($profile['effectDescription'] ?? ''),
                 'sum' => 0,
                 'count' => 0,
                 'sectorCounts' => [],
+                'scopeCounts' => [],
             ];
         }
 
@@ -603,45 +903,284 @@ function reporting_build_question_rankings(array $answerRows): array
         $buckets[$questionId]['count']++;
 
         $sectorName = trim((string) ($row['sector_name'] ?? ''));
+        $scopeName = reporting_scope_label_from_row($row);
 
         if ($sectorName !== '') {
             $buckets[$questionId]['sectorCounts'][$sectorName] = ($buckets[$questionId]['sectorCounts'][$sectorName] ?? 0) + 1;
+        }
+
+        if ($scopeName !== '') {
+            $buckets[$questionId]['scopeCounts'][$scopeName] = ($buckets[$questionId]['scopeCounts'][$scopeName] ?? 0) + 1;
         }
     }
 
     $items = [];
 
     foreach ($buckets as $bucket) {
-        $average = reporting_average((int) $bucket['sum'], (int) $bucket['count']);
-        $risk = reporting_risk_from_average($average, (int) $bucket['count']);
-        arsort($bucket['sectorCounts']);
-        $sectorName = (string) (array_key_first($bucket['sectorCounts']) ?? '');
+        $probability = reporting_average((int) $bucket['sum'], (int) $bucket['count']);
+        $effect = (int) ($bucket['effect'] ?? 3);
+        $riskScore = round($probability * $effect, 2);
+        $risk = reporting_risk_from_score($riskScore, (int) $bucket['count']);
+        $sectorName = reporting_dominant_label($bucket['sectorCounts']);
+        $scopeName = reporting_dominant_label($bucket['scopeCounts'], $sectorName !== '' ? $sectorName : 'Empresa');
 
         $items[] = [
             'questionId' => (int) $bucket['questionId'],
             'position' => (int) $bucket['position'],
             'text' => (string) $bucket['text'],
-            'average' => $average,
-            'score' => answer_average_to_percent($average),
+            'factorKey' => (string) $bucket['factorKey'],
+            'factorName' => (string) $bucket['factorName'],
+            'effect' => $effect,
+            'effectDescription' => (string) $bucket['effectDescription'],
+            'average' => $probability,
+            'probability' => $probability,
+            'riskScore' => $riskScore,
+            'score' => reporting_score_to_percent($riskScore),
             'answerCount' => (int) $bucket['count'],
-            'sectorName' => $sectorName,
+            'sectorName' => $sectorName !== '' ? $sectorName : 'Empresa',
+            'scopeName' => $scopeName !== '' ? $scopeName : 'Empresa',
             'riskLabel' => $risk['label'],
             'riskSlug' => $risk['slug'],
+            'pgrIncluded' => (bool) ($risk['includePgr'] ?? false),
+            'pgrLabel' => (string) ($risk['pgrLabel'] ?? 'Sem dados'),
+            'riskBand' => (string) ($risk['band'] ?? ''),
+            'actionGuidance' => (string) ($risk['actionGuidance'] ?? ''),
         ];
     }
 
     usort($items, static function (array $left, array $right): int {
-        if ($left['average'] === $right['average']) {
+        if (($left['riskScore'] ?? 0) === ($right['riskScore'] ?? 0)) {
             return $left['position'] <=> $right['position'];
         }
 
-        return $right['average'] <=> $left['average'];
+        return ($right['riskScore'] ?? 0) <=> ($left['riskScore'] ?? 0);
     });
 
     return $items;
 }
 
-function reporting_build_sector_breakdown(array $catalog, array $answerRows, float $fallbackAverage): array
+function reporting_build_applied_questions(array $questionRankings): array
+{
+    $items = $questionRankings;
+
+    usort($items, static function (array $left, array $right): int {
+        return ($left['position'] ?? 0) <=> ($right['position'] ?? 0);
+    });
+
+    return array_values($items);
+}
+
+function reporting_build_factor_results(array $questionRankings): array
+{
+    $buckets = [];
+
+    foreach ($questionRankings as $item) {
+        $factorKey = (string) ($item['factorKey'] ?? 'general');
+
+        if (!isset($buckets[$factorKey])) {
+            $buckets[$factorKey] = [
+                'factorKey' => $factorKey,
+                'factorName' => (string) ($item['factorName'] ?? 'Fator Psicossocial Geral'),
+                'effect' => (int) ($item['effect'] ?? 3),
+                'effectDescription' => (string) ($item['effectDescription'] ?? ''),
+                'weightedProbability' => 0.0,
+                'answerCount' => 0,
+                'questionCount' => 0,
+                'questions' => [],
+                'scopeCounts' => [],
+                'sectorCounts' => [],
+                'topQuestionText' => (string) ($item['text'] ?? ''),
+                'topRiskScore' => (float) ($item['riskScore'] ?? 0),
+            ];
+        }
+
+        $answerCount = (int) ($item['answerCount'] ?? 0);
+        $buckets[$factorKey]['weightedProbability'] += ((float) ($item['probability'] ?? 0)) * max($answerCount, 1);
+        $buckets[$factorKey]['answerCount'] += $answerCount;
+        $buckets[$factorKey]['questionCount']++;
+        $buckets[$factorKey]['questions'][] = [
+            'questionId' => (int) ($item['questionId'] ?? 0),
+            'position' => (int) ($item['position'] ?? 0),
+            'text' => (string) ($item['text'] ?? ''),
+        ];
+        $scopeName = (string) ($item['scopeName'] ?? 'Empresa');
+        $sectorName = (string) ($item['sectorName'] ?? 'Empresa');
+        $buckets[$factorKey]['scopeCounts'][$scopeName] = ($buckets[$factorKey]['scopeCounts'][$scopeName] ?? 0) + max($answerCount, 1);
+        $buckets[$factorKey]['sectorCounts'][$sectorName] = ($buckets[$factorKey]['sectorCounts'][$sectorName] ?? 0) + max($answerCount, 1);
+
+        if ((float) ($item['riskScore'] ?? 0) >= (float) $buckets[$factorKey]['topRiskScore']) {
+            $buckets[$factorKey]['topRiskScore'] = (float) ($item['riskScore'] ?? 0);
+            $buckets[$factorKey]['topQuestionText'] = (string) ($item['text'] ?? '');
+        }
+    }
+
+    $results = [];
+
+    foreach ($buckets as $bucket) {
+        $answerCount = (int) ($bucket['answerCount'] ?? 0);
+        $probability = $answerCount > 0
+            ? round(((float) $bucket['weightedProbability']) / $answerCount, 2)
+            : 0.0;
+        $effect = (int) ($bucket['effect'] ?? 3);
+        $riskScore = round($probability * $effect, 2);
+        $risk = reporting_risk_from_score($riskScore, $answerCount);
+
+        $results[] = [
+            'factorKey' => (string) ($bucket['factorKey'] ?? 'general'),
+            'factorName' => (string) ($bucket['factorName'] ?? 'Fator Psicossocial Geral'),
+            'effect' => $effect,
+            'effectDescription' => (string) ($bucket['effectDescription'] ?? ''),
+            'probability' => $probability,
+            'riskScore' => $riskScore,
+            'riskIndex' => reporting_score_to_percent($riskScore),
+            'answerCount' => $answerCount,
+            'questionCount' => (int) ($bucket['questionCount'] ?? 0),
+            'questions' => $bucket['questions'],
+            'scopeName' => reporting_dominant_label($bucket['scopeCounts'], 'Empresa'),
+            'sectorName' => reporting_dominant_label($bucket['sectorCounts'], 'Empresa'),
+            'topQuestionText' => (string) ($bucket['topQuestionText'] ?? ''),
+            'riskLabel' => (string) ($risk['label'] ?? 'Sem dados'),
+            'riskSlug' => (string) ($risk['slug'] ?? 'neutral'),
+            'pgrIncluded' => (bool) ($risk['includePgr'] ?? false),
+            'pgrLabel' => (string) ($risk['pgrLabel'] ?? 'Sem dados'),
+            'riskBand' => (string) ($risk['band'] ?? ''),
+            'actionGuidance' => (string) ($risk['actionGuidance'] ?? ''),
+        ];
+    }
+
+    usort($results, static function (array $left, array $right): int {
+        return ($right['riskScore'] ?? 0) <=> ($left['riskScore'] ?? 0);
+    });
+
+    return $results;
+}
+
+function reporting_build_methodology(array $questionRankings): array
+{
+    $factorCatalog = [];
+
+    foreach ($questionRankings as $item) {
+        $factorKey = (string) ($item['factorKey'] ?? 'general');
+
+        if (isset($factorCatalog[$factorKey])) {
+            continue;
+        }
+
+        $factorCatalog[$factorKey] = [
+            'factorKey' => $factorKey,
+            'factorName' => (string) ($item['factorName'] ?? 'Fator Psicossocial Geral'),
+            'effect' => (int) ($item['effect'] ?? 3),
+            'effectDescription' => (string) ($item['effectDescription'] ?? ''),
+        ];
+    }
+
+    usort($factorCatalog, static function (array $left, array $right): int {
+        if (($right['effect'] ?? 0) === ($left['effect'] ?? 0)) {
+            return strcmp((string) ($left['factorName'] ?? ''), (string) ($right['factorName'] ?? ''));
+        }
+
+        return ($right['effect'] ?? 0) <=> ($left['effect'] ?? 0);
+    });
+
+    return [
+        'scale' => [
+            ['value' => 1, 'label' => 'Nunca'],
+            ['value' => 2, 'label' => 'Raramente'],
+            ['value' => 3, 'label' => 'As vezes'],
+            ['value' => 4, 'label' => 'Frequentemente'],
+            ['value' => 5, 'label' => 'Sempre'],
+        ],
+        'formula' => [
+            'A probabilidade corresponde a media aritmetica das respostas validas na escala de 1 a 5.',
+            'O efeito e um valor fixo por fator psicossocial mapeado para cada pergunta.',
+            'O resultado do risco e calculado por: probabilidade media x efeito.',
+            'A classificacao final segue a matriz de risco com faixas baixo (1 a 6), moderado (7 a 14) e alto (15 a 25).',
+        ],
+        'pgrCriterion' => 'Itens classificados como risco moderado ou alto (resultado igual ou superior a 7) devem ser considerados para inclusao no PGR.',
+        'matrix' => [
+            [
+                'range' => '1 a 6',
+                'label' => 'Risco Baixo',
+                'slug' => 'low',
+                'pgrLabel' => 'Monitoramento interno',
+            ],
+            [
+                'range' => '7 a 14',
+                'label' => 'Risco Moderado',
+                'slug' => 'medium',
+                'pgrLabel' => 'Incluir no PGR',
+            ],
+            [
+                'range' => '15 a 25',
+                'label' => 'Risco Alto',
+                'slug' => 'high',
+                'pgrLabel' => 'Incluir no PGR',
+            ],
+        ],
+        'factorCatalog' => array_values($factorCatalog),
+    ];
+}
+
+function reporting_filter_catalog_by_scope(array $catalog, array $filters): array
+{
+    $selectedSectorIds = array_map('intval', $filters['sectorIds'] ?? []);
+    $selectedSectorId = (int) ($filters['sectorId'] ?? 0);
+    $selectedFunctionId = (int) ($filters['functionId'] ?? 0);
+
+    if ($selectedFunctionId > 0) {
+        foreach ($catalog['functions'] ?? [] as $companyFunction) {
+            if ((int) ($companyFunction['id'] ?? 0) !== $selectedFunctionId) {
+                continue;
+            }
+
+            $sectorId = (int) ($companyFunction['sectorId'] ?? 0);
+            $filteredSectors = [];
+
+            foreach ($catalog['sectors'] ?? [] as $sector) {
+                if ((int) ($sector['id'] ?? 0) !== $sectorId) {
+                    continue;
+                }
+
+                $sector['functions'] = array_values(array_filter(
+                    $sector['functions'] ?? [],
+                    static fn (array $item): bool => (int) ($item['id'] ?? 0) === $selectedFunctionId
+                ));
+                $filteredSectors[] = $sector;
+                break;
+            }
+
+            return [
+                'sectors' => $filteredSectors,
+                'functions' => [$companyFunction],
+            ];
+        }
+    }
+
+    if ($selectedSectorId > 0) {
+        $selectedSectorIds = [$selectedSectorId];
+    }
+
+    if ($selectedSectorIds === []) {
+        return $catalog;
+    }
+
+    $filteredSectors = array_values(array_filter(
+        $catalog['sectors'] ?? [],
+        static fn (array $sector): bool => in_array((int) ($sector['id'] ?? 0), $selectedSectorIds, true)
+    ));
+
+    $filteredFunctions = array_values(array_filter(
+        $catalog['functions'] ?? [],
+        static fn (array $companyFunction): bool => in_array((int) ($companyFunction['sectorId'] ?? 0), $selectedSectorIds, true)
+    ));
+
+    return [
+        'sectors' => $filteredSectors,
+        'functions' => $filteredFunctions,
+    ];
+}
+
+function reporting_build_sector_breakdown(array $catalog, array $answerRows): array
 {
     $sectorBuckets = [];
     $functionBuckets = [];
@@ -650,22 +1189,25 @@ function reporting_build_sector_breakdown(array $catalog, array $answerRows, flo
         $sectorId = (int) ($row['resolved_sector_id'] ?? 0);
         $functionId = (int) ($row['function_id'] ?? 0);
         $answerValue = (int) ($row['answer_value'] ?? 0);
+        $effect = (float) ($row['effect'] ?? reporting_question_profile((string) ($row['question_text'] ?? ''))['effect']);
 
         if ($sectorId > 0) {
             if (!isset($sectorBuckets[$sectorId])) {
-                $sectorBuckets[$sectorId] = ['sum' => 0, 'count' => 0];
+                $sectorBuckets[$sectorId] = ['probabilitySum' => 0.0, 'effectSum' => 0.0, 'count' => 0];
             }
 
-            $sectorBuckets[$sectorId]['sum'] += $answerValue;
+            $sectorBuckets[$sectorId]['probabilitySum'] += $answerValue;
+            $sectorBuckets[$sectorId]['effectSum'] += $effect;
             $sectorBuckets[$sectorId]['count']++;
         }
 
         if ($functionId > 0) {
             if (!isset($functionBuckets[$functionId])) {
-                $functionBuckets[$functionId] = ['sum' => 0, 'count' => 0];
+                $functionBuckets[$functionId] = ['probabilitySum' => 0.0, 'effectSum' => 0.0, 'count' => 0];
             }
 
-            $functionBuckets[$functionId]['sum'] += $answerValue;
+            $functionBuckets[$functionId]['probabilitySum'] += $answerValue;
+            $functionBuckets[$functionId]['effectSum'] += $effect;
             $functionBuckets[$functionId]['count']++;
         }
     }
@@ -673,26 +1215,38 @@ function reporting_build_sector_breakdown(array $catalog, array $answerRows, flo
     $sectors = [];
 
     foreach ($catalog['sectors'] as $sector) {
-        $bucket = $sectorBuckets[(int) $sector['id']] ?? ['sum' => 0, 'count' => 0];
+        $bucket = $sectorBuckets[(int) $sector['id']] ?? ['probabilitySum' => 0.0, 'effectSum' => 0.0, 'count' => 0];
         $average = $bucket['count'] > 0
-            ? reporting_average((int) $bucket['sum'], (int) $bucket['count'])
-            : ($fallbackAverage > 0 ? $fallbackAverage : 0.0);
-        $risk = reporting_risk_from_average($average, max((int) $bucket['count'], $fallbackAverage > 0 ? 1 : 0));
+            ? reporting_average((float) $bucket['probabilitySum'], (int) $bucket['count'])
+            : 0.0;
+        $effectAverage = $bucket['count'] > 0
+            ? reporting_average((float) $bucket['effectSum'], (int) $bucket['count'])
+            : 0.0;
+        $riskScore = $bucket['count'] > 0 ? round($average * $effectAverage, 2) : 0.0;
+        $risk = reporting_risk_from_score($riskScore, (int) ($bucket['count'] ?? 0));
 
         $functions = [];
 
         foreach ($sector['functions'] as $companyFunction) {
-            $functionBucket = $functionBuckets[(int) $companyFunction['id']] ?? ['sum' => 0, 'count' => 0];
+            $functionBucket = $functionBuckets[(int) $companyFunction['id']] ?? ['probabilitySum' => 0.0, 'effectSum' => 0.0, 'count' => 0];
             $functionAverage = $functionBucket['count'] > 0
-                ? reporting_average((int) $functionBucket['sum'], (int) $functionBucket['count'])
-                : $average;
-            $functionRisk = reporting_risk_from_average($functionAverage, max((int) $functionBucket['count'], $average > 0 ? 1 : 0));
+                ? reporting_average((float) $functionBucket['probabilitySum'], (int) $functionBucket['count'])
+                : 0.0;
+            $functionEffectAverage = $functionBucket['count'] > 0
+                ? reporting_average((float) $functionBucket['effectSum'], (int) $functionBucket['count'])
+                : 0.0;
+            $functionRiskScore = $functionBucket['count'] > 0
+                ? round($functionAverage * $functionEffectAverage, 2)
+                : 0.0;
+            $functionRisk = reporting_risk_from_score($functionRiskScore, (int) ($functionBucket['count'] ?? 0));
 
             $functions[] = [
                 'id' => (int) $companyFunction['id'],
                 'name' => (string) $companyFunction['name'],
                 'employees' => (int) $companyFunction['employees'],
                 'average' => $functionAverage,
+                'effectAverage' => $functionEffectAverage,
+                'riskScore' => $functionRiskScore,
                 'answerCount' => (int) ($functionBucket['count'] ?? 0),
                 'riskLabel' => $functionRisk['label'],
                 'riskSlug' => $functionRisk['slug'],
@@ -700,7 +1254,7 @@ function reporting_build_sector_breakdown(array $catalog, array $answerRows, flo
         }
 
         usort($functions, static function (array $left, array $right): int {
-            return $right['average'] <=> $left['average'];
+            return ($right['riskScore'] ?? 0) <=> ($left['riskScore'] ?? 0);
         });
 
         $sectors[] = [
@@ -708,6 +1262,8 @@ function reporting_build_sector_breakdown(array $catalog, array $answerRows, flo
             'name' => (string) $sector['name'],
             'employees' => (int) $sector['employees'],
             'average' => $average,
+            'effectAverage' => $effectAverage,
+            'riskScore' => $riskScore,
             'answerCount' => (int) ($bucket['count'] ?? 0),
             'riskLabel' => $risk['label'],
             'riskSlug' => $risk['slug'],
@@ -716,7 +1272,7 @@ function reporting_build_sector_breakdown(array $catalog, array $answerRows, flo
     }
 
     usort($sectors, static function (array $left, array $right): int {
-        return $right['average'] <=> $left['average'];
+        return ($right['riskScore'] ?? 0) <=> ($left['riskScore'] ?? 0);
     });
 
     return $sectors;
@@ -741,25 +1297,27 @@ function reporting_build_distribution(array $sectorBreakdown): array
     return $distribution;
 }
 
-function reporting_build_heatmap_items(array $questionRankings): array
+function reporting_build_heatmap_items(array $factorResults): array
 {
     $items = [];
 
-    foreach (array_slice($questionRankings, 0, 5) as $index => $item) {
-        $probability = max(1, min(5, (int) round((float) $item['average'])));
-        $impact = max(1, min(5, (int) round((float) $item['average'] + ((float) $item['average'] >= 4 ? 0.6 : 0.2))));
-        $score = $probability * $impact;
+    foreach (array_slice($factorResults, 0, 5) as $index => $item) {
+        $probability = max(1, min(5, (int) round((float) ($item['probability'] ?? 0))));
+        $impact = max(1, min(5, (int) ($item['effect'] ?? 1)));
+        $score = round((float) ($item['riskScore'] ?? 0), 2);
 
         $items[] = [
             'rank' => $index + 1,
-            'questionId' => (int) $item['questionId'],
-            'text' => (string) $item['text'],
-            'sectorName' => (string) ($item['sectorName'] ?? ''),
-            'average' => (float) $item['average'],
+            'factorKey' => (string) ($item['factorKey'] ?? 'general'),
+            'text' => (string) ($item['factorName'] ?? 'Fator Psicossocial Geral'),
+            'sectorName' => (string) (($item['scopeName'] ?? $item['sectorName'] ?? '') ?: 'Empresa'),
+            'average' => (float) ($item['probability'] ?? 0),
             'probability' => $probability,
             'impact' => $impact,
             'score' => $score,
-            'riskLabel' => (string) $item['riskLabel'],
+            'riskLabel' => (string) ($item['riskLabel'] ?? 'Sem dados'),
+            'riskSlug' => (string) ($item['riskSlug'] ?? 'neutral'),
+            'pgrLabel' => (string) ($item['pgrLabel'] ?? 'Sem dados'),
         ];
     }
 
@@ -818,6 +1376,21 @@ function reporting_recommendation_from_question(string $questionText): string
     return 'Realizar escuta estruturada com o time, definir plano de melhoria e monitorar o indicador nas próximas coletas.';
 }
 
+function reporting_recommendation_from_factor(string $factorKey, string $questionText = ''): string
+{
+    $normalizedKey = trim(strtolower($factorKey));
+
+    return match ($normalizedKey) {
+        'demands' => 'Revisar distribuicao de tarefas, prazos, volume operacional e pausas para reduzir sobrecarga percebida.',
+        'recovery' => 'Fortalecer pausas, recuperacao e organizacao da jornada para evitar desgaste continuo.',
+        'support' => 'Estruturar rotina de apoio, escuta e feedback com lideranca e equipe imediata.',
+        'climate' => 'Promover alinhamento do clima, dialogo e mediacao de conflitos no ambiente de trabalho.',
+        'clarity' => 'Reforcar prioridades, papeis e criterios de decisao para reduzir ambiguidades na execucao.',
+        'engagement' => 'Criar acoes de engajamento, reconhecimento e reforco do sentido do trabalho no dia a dia.',
+        default => reporting_recommendation_from_question($questionText),
+    };
+}
+
 function reporting_action_plan_status_label(string $statusSlug): string
 {
     $map = [
@@ -844,34 +1417,39 @@ function reporting_action_plan_status_slug(string $statusSlug): string
     return 'monitor';
 }
 
-function reporting_build_action_plan(array $questionRankings, string $selectedSectorLabel = ''): array
+function reporting_build_action_plan(array $factorResults, string $selectedSectorLabel = ''): array
 {
     $plan = [];
     $selectedSectorLabel = trim($selectedSectorLabel);
 
-    foreach (array_slice($questionRankings, 0, 4) as $item) {
-        $average = (float) ($item['average'] ?? 0);
+    foreach (array_slice($factorResults, 0, 4) as $item) {
+        $riskSlug = (string) ($item['riskSlug'] ?? 'low');
         $priority = 'Monitorar';
         $prioritySlug = 'monitor';
         $deadline = '90 dias';
 
-        if ($average >= 4.2) {
+        if ($riskSlug === 'high') {
             $priority = 'Prioridade Alta';
             $prioritySlug = 'high';
             $deadline = '30 dias';
-        } elseif ($average >= 3.2) {
+        } elseif ($riskSlug === 'medium') {
             $priority = 'Prioridade Média';
             $prioritySlug = 'medium';
             $deadline = '60 dias';
         }
 
         $plan[] = [
-            'factor' => (string) $item['text'],
-            'sectorName' => $selectedSectorLabel !== '' ? $selectedSectorLabel : (string) ($item['sectorName'] ?: 'Empresa'),
-            'recommendedAction' => reporting_recommendation_from_question((string) $item['text']),
+            'factor' => (string) ($item['factorName'] ?? 'Fator Psicossocial Geral'),
+            'sectorName' => $selectedSectorLabel !== '' ? $selectedSectorLabel : (string) (($item['scopeName'] ?? $item['sectorName'] ?? '') ?: 'Empresa'),
+            'recommendedAction' => reporting_recommendation_from_factor(
+                (string) ($item['factorKey'] ?? 'general'),
+                (string) ($item['topQuestionText'] ?? '')
+            ),
             'deadline' => $deadline,
             'priorityLabel' => $priority,
             'prioritySlug' => $prioritySlug,
+            'riskScore' => (float) ($item['riskScore'] ?? 0),
+            'pgrLabel' => (string) ($item['pgrLabel'] ?? 'Sem dados'),
         ];
     }
 
@@ -1011,41 +1589,49 @@ function reporting_build_payload(PDO $pdo, array $input): array
 {
     $companies = reporting_fetch_companies($pdo);
     $filters = reporting_build_filters($input, $companies);
+    $company = reporting_find_company($companies, (int) $filters['companyId']);
+    $companyForms = reporting_fetch_company_forms($pdo, (int) $filters['companyId']);
+    $selectedForm = reporting_resolve_form_filter($companyForms, $company, $input);
+    $filters['formId'] = (int) ($selectedForm['id'] ?? 0) > 0 ? (int) $selectedForm['id'] : null;
+    $filters['formLabel'] = (string) ($selectedForm['name'] ?? '');
+    $filters['formCode'] = (string) ($selectedForm['publicCode'] ?? '');
+
     $catalog = reporting_fetch_company_catalog($pdo, (int) $filters['companyId']);
+    $reportCatalog = reporting_filter_catalog_by_scope($catalog, $filters);
     $sessionRows = reporting_fetch_session_rows($pdo, $filters);
     $answerRows = reporting_fetch_answer_rows($pdo, $filters);
-
-    $company = [
-        'id' => 0,
-        'name' => 'Empresa',
-        'employees' => 0,
-        'activeFormName' => '',
-    ];
-
-    foreach ($companies as $companyRow) {
-        if ((int) $companyRow['id'] === (int) $filters['companyId']) {
-            $company = $companyRow;
-            break;
-        }
-    }
-
-    $summary = reporting_build_summary($sessionRows, $answerRows, $company);
-    $sectorBreakdown = reporting_build_sector_breakdown($catalog, $answerRows, (float) $summary['average']);
     $questionRankings = reporting_build_question_rankings($answerRows);
-    $heatmapItems = reporting_build_heatmap_items($questionRankings);
+    $appliedQuestions = reporting_build_applied_questions($questionRankings);
+    $factorResults = reporting_build_factor_results($questionRankings);
+    $methodology = reporting_build_methodology($questionRankings);
+    $summary = reporting_build_summary($sessionRows, $answerRows, $company, $questionRankings, $factorResults);
+    $sectorBreakdown = reporting_build_sector_breakdown($reportCatalog, $answerRows);
+    $heatmapItems = reporting_build_heatmap_items($factorResults);
     $savedActionPlan = reporting_fetch_saved_action_plan($pdo, $filters);
     $selectedSectorLabel = reporting_selected_sector_label($catalog, $filters);
-    $actionPlan = $savedActionPlan !== [] ? $savedActionPlan : reporting_build_action_plan($questionRankings, $selectedSectorLabel);
+    $actionPlan = $savedActionPlan !== [] ? $savedActionPlan : reporting_build_action_plan($factorResults, $selectedSectorLabel);
     $distribution = reporting_build_distribution($sectorBreakdown);
     $criticalSectors = array_values(array_filter($sectorBreakdown, static function (array $sector): bool {
         return in_array($sector['riskSlug'] ?? '', ['medium', 'high'], true);
     }));
+    $pgrIncludedFactors = array_values(array_filter($factorResults, static function (array $factor): bool {
+        return (bool) ($factor['pgrIncluded'] ?? false);
+    }));
+
+    $company['selectedFormId'] = (int) ($selectedForm['id'] ?? 0) > 0 ? (int) $selectedForm['id'] : null;
+    $company['selectedFormName'] = (string) ($selectedForm['name'] ?? '') !== ''
+        ? (string) $selectedForm['name']
+        : (string) ($company['activeFormName'] ?? '');
+    $company['selectedFormCode'] = (string) ($selectedForm['publicCode'] ?? '') !== ''
+        ? (string) $selectedForm['publicCode']
+        : (string) ($company['activeFormCode'] ?? '');
 
     return [
         'filters' => $filters,
         'company' => $company,
         'options' => [
             'companies' => $companies,
+            'forms' => $companyForms,
             'sectors' => array_map(static function (array $sector): array {
                 return [
                     'id' => (int) $sector['id'],
@@ -1068,11 +1654,22 @@ function reporting_build_payload(PDO $pdo, array $input): array
             'pendingSessions' => (int) $summary['pendingSessions'],
             'participationRate' => (int) $summary['participationRate'],
             'complianceRate' => (int) $summary['complianceRate'],
+            'answersCount' => (int) $summary['answersCount'],
             'riskIndex' => (int) $summary['riskIndex'],
             'riskLabel' => (string) $summary['riskLabel'],
             'riskSlug' => (string) $summary['riskSlug'],
+            'averageProbability' => (float) $summary['average'],
+            'averageEffect' => (float) $summary['effectAverage'],
+            'riskScore' => (float) $summary['riskScore'],
+            'pgrIncluded' => (bool) $summary['pgrIncluded'],
+            'pgrLabel' => (string) $summary['pgrLabel'],
+            'totalQuestions' => (int) $summary['totalQuestions'],
             'criticalSectorsCount' => count($criticalSectors),
+            'pgrFactorsCount' => count($pgrIncludedFactors),
         ],
+        'methodology' => $methodology,
+        'appliedQuestions' => $appliedQuestions,
+        'factorResults' => $factorResults,
         'statusBreakdown' => reporting_build_status_breakdown($sessionRows),
         'completionSeries' => reporting_build_monthly_completion_series($sessionRows, 6),
         'riskSeries' => reporting_build_monthly_risk_series($answerRows, 6),
@@ -1089,5 +1686,7 @@ function reporting_build_payload(PDO $pdo, array $input): array
             (int) $filters['companyId'],
             (string) ($filters['period'] ?? '180')
         ),
+        'sessionRows' => $sessionRows,
+        'answerRows' => $answerRows,
     ];
 }

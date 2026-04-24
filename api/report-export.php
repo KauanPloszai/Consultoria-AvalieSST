@@ -123,6 +123,39 @@ function export_join_values(array $items, string $fallback = 'Todos os setores s
     return implode(', ', $normalized);
 }
 
+function export_build_final_considerations(array $payload): array
+{
+    $summary = $payload['summary'] ?? [];
+    $company = $payload['company'] ?? [];
+    $factorResults = $payload['factorResults'] ?? [];
+    $selectedFormName = (string) (($company['selectedFormName'] ?? $company['activeFormName'] ?? '') ?: 'Nao vinculado');
+    $sectorNames = export_selected_sector_names($payload);
+    $sectorsLabel = export_join_values($sectorNames);
+
+    if ((int) ($summary['answersCount'] ?? 0) <= 0) {
+        return [
+            'title' => 'Consideracoes finais',
+            'paragraphs' => [
+                'O formulario ' . $selectedFormName . ' ainda nao possui respostas concluidas suficientes para gerar uma interpretacao tecnica consolidada.',
+            ],
+        ];
+    }
+
+    $paragraphs = [
+        'O relatorio foi consolidado com base nas respostas reais do formulario ' . $selectedFormName . ', considerando o recorte de ' . $sectorsLabel . '. O risco global atual foi classificado como ' . (string) ($summary['riskLabel'] ?? 'Sem dados') . '.',
+    ];
+
+    if (!empty($factorResults[0])) {
+        $topFactor = $factorResults[0];
+        $paragraphs[] = 'O fator de maior impacto foi ' . (string) ($topFactor['factorName'] ?? 'Fator') . ', com resultado ' . export_format_decimal((float) ($topFactor['riskScore'] ?? 0)) . ' e indicacao ' . (string) ($topFactor['pgrLabel'] ?? 'Sem dados') . '.';
+    }
+
+    return [
+        'title' => 'Consideracoes finais',
+        'paragraphs' => $paragraphs,
+    ];
+}
+
 function export_sheet_name(string $name): string
 {
     $normalized = preg_replace('/[\\\\\\/*?:\\[\\]]/', ' ', $name) ?? $name;
@@ -396,9 +429,13 @@ function export_build_excel_rows(array $payload, array $sections): array
     $worksheets = [];
     $summary = $payload['summary'] ?? [];
     $company = $payload['company'] ?? [];
+    $methodology = $payload['methodology'] ?? [];
+    $appliedQuestions = $payload['appliedQuestions'] ?? [];
+    $factorResults = $payload['factorResults'] ?? [];
     $sectorNames = export_selected_sector_names($payload);
     $statusBreakdown = $payload['statusBreakdown'] ?? [];
     $distribution = $payload['distribution'] ?? ['low' => 0, 'medium' => 0, 'high' => 0];
+    $finalConsiderations = export_build_final_considerations($payload);
 
     if (in_array('cover', $sections, true)) {
         $coverRows = [
@@ -420,7 +457,7 @@ function export_build_excel_rows(array $payload, array $sections): array
             ],
             [
                 ['value' => 'Formulario ativo', 'style' => 3],
-                ['value' => (string) (($company['activeFormName'] ?? '') ?: 'Nao vinculado'), 'style' => 4],
+                ['value' => (string) (($company['selectedFormName'] ?? $company['activeFormName'] ?? '') ?: 'Nao vinculado'), 'style' => 4],
             ],
             [
                 ['value' => 'Setores considerados', 'style' => 3],
@@ -469,6 +506,18 @@ function export_build_excel_rows(array $payload, array $sections): array
                 ['value' => (string) ($summary['riskLabel'] ?? 'Sem dados'), 'style' => 4],
             ],
             [
+                ['value' => 'Probabilidade media', 'style' => 3],
+                ['value' => (float) ($summary['averageProbability'] ?? 0), 'style' => 4, 'type' => 'number'],
+            ],
+            [
+                ['value' => 'Efeito medio aplicado', 'style' => 3],
+                ['value' => (float) ($summary['averageEffect'] ?? 0), 'style' => 4, 'type' => 'number'],
+            ],
+            [
+                ['value' => 'Resultado do risco', 'style' => 3],
+                ['value' => (float) ($summary['riskScore'] ?? 0), 'style' => 4, 'type' => 'number'],
+            ],
+            [
                 ['value' => 'Participacao', 'style' => 3],
                 ['value' => (int) ($summary['participationRate'] ?? 0), 'style' => 4, 'type' => 'number'],
             ],
@@ -485,8 +534,8 @@ function export_build_excel_rows(array $payload, array $sections): array
                 ['value' => (int) ($summary['completedSessions'] ?? 0), 'style' => 4, 'type' => 'number'],
             ],
             [
-                ['value' => 'Setores criticos', 'style' => 3],
-                ['value' => (int) ($summary['criticalSectorsCount'] ?? 0), 'style' => 4, 'type' => 'number'],
+                ['value' => 'Fatores no PGR', 'style' => 3],
+                ['value' => (int) ($summary['pgrFactorsCount'] ?? 0), 'style' => 4, 'type' => 'number'],
             ],
             [],
             [
@@ -526,9 +575,46 @@ function export_build_excel_rows(array $payload, array $sections): array
             ['value' => (int) ($distribution['high'] ?? 0), 'style' => 4, 'type' => 'number'],
         ];
 
+        $summaryRows[] = [];
+        $summaryRows[] = [
+            ['value' => 'Metodologia aplicada', 'style' => 2],
+        ];
+
+        foreach (($methodology['formula'] ?? []) as $index => $item) {
+            $summaryRows[] = [
+                ['value' => sprintf('%d. %s', $index + 1, (string) $item), 'style' => 4],
+            ];
+        }
+
+        $summaryRows[] = [
+            ['value' => (string) ($methodology['pgrCriterion'] ?? ''), 'style' => 4],
+        ];
+
+        $summaryRows[] = [];
+        $summaryRows[] = [
+            ['value' => 'Perguntas aplicadas', 'style' => 2],
+        ];
+        $summaryRows[] = [
+            ['value' => 'Pergunta', 'style' => 3],
+            ['value' => 'Fator', 'style' => 3],
+            ['value' => 'Efeito', 'style' => 3],
+            ['value' => 'Probabilidade', 'style' => 3],
+            ['value' => 'Resultado', 'style' => 3],
+        ];
+
+        foreach ($appliedQuestions as $item) {
+            $summaryRows[] = [
+                ['value' => (string) ($item['text'] ?? 'Pergunta'), 'style' => 4],
+                ['value' => (string) ($item['factorName'] ?? 'Fator'), 'style' => 4],
+                ['value' => (int) ($item['effect'] ?? 0), 'style' => 4, 'type' => 'number'],
+                ['value' => (float) ($item['probability'] ?? 0), 'style' => 4, 'type' => 'number'],
+                ['value' => (float) ($item['riskScore'] ?? 0), 'style' => 4, 'type' => 'number'],
+            ];
+        }
+
         $worksheets[] = [
             'name' => 'Resumo Executivo',
-            'widths' => [32, 20, 18, 18, 18],
+            'widths' => [44, 24, 12, 14, 14],
             'rows' => $summaryRows,
         ];
     }
@@ -570,33 +656,35 @@ function export_build_excel_rows(array $payload, array $sections): array
     if (in_array('heatmap', $sections, true)) {
         $questionRows = [
             [
-                ['value' => 'Perguntas Criticas e Heatmap', 'style' => 1],
+                ['value' => 'Matriz de Risco e Fatores Consolidados', 'style' => 1],
             ],
             [],
             [
-                ['value' => 'Posicao', 'style' => 2],
-                ['value' => 'Pergunta', 'style' => 2],
-                ['value' => 'Setor', 'style' => 2],
-                ['value' => 'Media', 'style' => 2],
-                ['value' => 'Score', 'style' => 2],
-                ['value' => 'Risco', 'style' => 2],
+                ['value' => 'Fator', 'style' => 2],
+                ['value' => 'Escopo', 'style' => 2],
+                ['value' => 'Probabilidade', 'style' => 2],
+                ['value' => 'Efeito', 'style' => 2],
+                ['value' => 'Resultado', 'style' => 2],
+                ['value' => 'Classificacao', 'style' => 2],
+                ['value' => 'PGR', 'style' => 2],
             ],
         ];
 
-        foreach (($payload['heatmapItems'] ?? []) as $index => $item) {
+        foreach ($factorResults as $item) {
             $questionRows[] = [
-                ['value' => $index + 1, 'style' => 4, 'type' => 'number'],
-                ['value' => (string) ($item['text'] ?? 'Pergunta'), 'style' => 4],
-                ['value' => (string) (($item['sectorName'] ?? '') ?: 'Empresa'), 'style' => 4],
-                ['value' => (float) ($item['average'] ?? 0), 'style' => 4, 'type' => 'number'],
-                ['value' => (int) ($item['score'] ?? 0), 'style' => 4, 'type' => 'number'],
+                ['value' => (string) ($item['factorName'] ?? 'Fator'), 'style' => 4],
+                ['value' => (string) (($item['scopeName'] ?? $item['sectorName'] ?? '') ?: 'Empresa'), 'style' => 4],
+                ['value' => (float) ($item['probability'] ?? 0), 'style' => 4, 'type' => 'number'],
+                ['value' => (int) ($item['effect'] ?? 0), 'style' => 4, 'type' => 'number'],
+                ['value' => (float) ($item['riskScore'] ?? 0), 'style' => 4, 'type' => 'number'],
                 ['value' => (string) ($item['riskLabel'] ?? 'Sem dados'), 'style' => 4],
+                ['value' => (string) ($item['pgrLabel'] ?? 'Sem dados'), 'style' => 4],
             ];
         }
 
         $worksheets[] = [
             'name' => 'Matriz de Risco',
-            'widths' => [10, 50, 18, 12, 12, 16],
+            'widths' => [28, 22, 14, 12, 14, 18, 18],
             'rows' => $questionRows,
         ];
     }
@@ -613,6 +701,7 @@ function export_build_excel_rows(array $payload, array $sections): array
                 ['value' => 'Acao recomendada', 'style' => 2],
                 ['value' => 'Prazo', 'style' => 2],
                 ['value' => 'Prioridade', 'style' => 2],
+                ['value' => 'PGR', 'style' => 2],
             ],
         ];
 
@@ -623,12 +712,24 @@ function export_build_excel_rows(array $payload, array $sections): array
                 ['value' => (string) ($item['recommendedAction'] ?? ''), 'style' => 4],
                 ['value' => (string) ($item['deadline'] ?? ''), 'style' => 4],
                 ['value' => (string) ($item['priorityLabel'] ?? ''), 'style' => 4],
+                ['value' => (string) ($item['pgrLabel'] ?? ''), 'style' => 4],
+            ];
+        }
+
+        $actionRows[] = [];
+        $actionRows[] = [
+            ['value' => (string) ($finalConsiderations['title'] ?? 'Consideracoes finais'), 'style' => 2],
+        ];
+
+        foreach (($finalConsiderations['paragraphs'] ?? []) as $paragraph) {
+            $actionRows[] = [
+                ['value' => (string) $paragraph, 'style' => 4],
             ];
         }
 
         $worksheets[] = [
             'name' => 'Plano de Acao',
-            'widths' => [34, 22, 56, 16, 20],
+            'widths' => [30, 20, 48, 16, 20, 18],
             'rows' => $actionRows,
         ];
     }
@@ -787,10 +888,25 @@ function export_pdf_build_question_rows(array $items): string
     return '<div class="pdf-list-card">' . $rows . '</div>';
 }
 
+function export_load_print_stylesheet(): string
+{
+    $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'report-print.css';
+    $css = @file_get_contents($path);
+
+    if (!is_string($css) || trim($css) === '') {
+        return '';
+    }
+
+    return $css;
+}
+
 function export_pdf_render(array $payload, array $sections): string
 {
     $summary = $payload['summary'] ?? [];
     $company = $payload['company'] ?? [];
+    $methodology = $payload['methodology'] ?? [];
+    $appliedQuestions = $payload['appliedQuestions'] ?? [];
+    $factorResults = $payload['factorResults'] ?? [];
     $sectorNames = export_selected_sector_names($payload);
     $pageSequence = export_build_page_sequence($sections);
     $distribution = $payload['distribution'] ?? ['low' => 0, 'medium' => 0, 'high' => 0];
@@ -798,6 +914,9 @@ function export_pdf_render(array $payload, array $sections): string
     $questionRankings = array_slice($payload['questionRankings'] ?? [], 0, 5);
     $actionPlan = $payload['actionPlan'] ?? [];
     $heatmapItems = $payload['heatmapItems'] ?? [];
+    $selectedFormName = (string) (($company['selectedFormName'] ?? $company['activeFormName'] ?? '') ?: 'Nao vinculado');
+    $finalConsiderations = export_build_final_considerations($payload);
+    $printStylesheet = export_load_print_stylesheet();
     $pagesMarkup = '';
 
     foreach ($pageSequence as $entry) {
@@ -817,7 +936,7 @@ function export_pdf_render(array $payload, array $sections): string
                 <div class="pdf-cover-meta">
                   <div><span>ORGANIZACAO AVALIADA</span><strong>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</strong></div>
                   <div><span>PERIODO DE REFERENCIA</span><strong>' . export_escape((string) ($summary['periodLabel'] ?? 'Todo o historico')) . '</strong></div>
-                  <div><span>FORMULARIO ATIVO</span><strong>' . export_escape((string) (($company['activeFormName'] ?? '') ?: 'Nao vinculado')) . '</strong></div>
+                  <div><span>FORMULARIO ATIVO</span><strong>' . export_escape($selectedFormName) . '</strong></div>
                   <div><span>DATA DE EMISSAO</span><strong>' . export_escape((string) ($summary['emittedAt'] ?? '')) . '</strong></div>
                 </div>
                 <div class="pdf-footer">
@@ -839,7 +958,7 @@ function export_pdf_render(array $payload, array $sections): string
                 <div class="pdf-index">' . export_pdf_build_index_rows($pageSequence) . '</div>
                 <div class="pdf-note-card">
                   <strong>Escopo do relatorio</strong>
-                  <p>Empresa: <strong>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</strong> | Periodo: <strong>' . export_escape((string) ($summary['periodLabel'] ?? 'Todo o historico')) . '</strong></p>
+                  <p>Empresa: <strong>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</strong> | Periodo: <strong>' . export_escape((string) ($summary['periodLabel'] ?? 'Todo o historico')) . '</strong> | Formulario: <strong>' . export_escape($selectedFormName) . '</strong></p>
                   <p>Setores considerados: ' . export_escape(export_join_values($sectorNames)) . '</p>
                 </div>
                 <span class="page__number">Pagina ' . $pageNumber . '</span>
@@ -850,9 +969,41 @@ function export_pdf_render(array $payload, array $sections): string
 
         if ($key === 'summary') {
             $statusRows = '';
+            $methodologyRows = '';
+            $appliedQuestionRows = '';
 
             foreach ($statusBreakdown as $status) {
                 $statusRows .= '<tr><td>' . export_escape((string) ($status['label'] ?? 'Status')) . '</td><td>' . export_format_int((int) ($status['value'] ?? 0)) . '</td></tr>';
+            }
+
+            foreach (($methodology['formula'] ?? []) as $index => $item) {
+                $methodologyRows .= '
+                  <div class="pdf-factor-row">
+                    <i>' . ($index + 1) . '</i>
+                    <div><strong>Etapa ' . ($index + 1) . '</strong><span>' . export_escape((string) $item) . '</span></div>
+                  </div>
+                ';
+            }
+
+            foreach ($appliedQuestions as $item) {
+                $appliedQuestionRows .= '
+                  <tr>
+                    <td>' . export_escape((string) ($item['text'] ?? 'Pergunta')) . '</td>
+                    <td>' . export_escape((string) ($item['factorName'] ?? 'Fator')) . '</td>
+                    <td>' . export_format_int((int) ($item['effect'] ?? 0)) . '</td>
+                    <td>' . export_format_decimal((float) ($item['probability'] ?? 0)) . '</td>
+                    <td>' . export_format_decimal((float) ($item['riskScore'] ?? 0)) . '</td>
+                    <td>' . export_pdf_badge((string) ($item['riskLabel'] ?? 'Sem dados'), (string) ($item['riskSlug'] ?? 'neutral')) . '</td>
+                  </tr>
+                ';
+            }
+
+            if ($methodologyRows === '') {
+                $methodologyRows = '<div class="pdf-empty">Metodologia indisponivel para o recorte selecionado.</div>';
+            }
+
+            if ($appliedQuestionRows === '') {
+                $appliedQuestionRows = '<tr><td colspan="6" class="pdf-empty-cell">Nenhuma pergunta aplicada foi encontrada para este formulario.</td></tr>';
             }
 
             $pagesMarkup .= '
@@ -863,7 +1014,7 @@ function export_pdf_render(array $payload, array $sections): string
                   <article class="pdf-metric"><span>INDICE GLOBAL DE RISCO</span><strong>' . export_format_int((int) ($summary['riskIndex'] ?? 0)) . '/100</strong><em>' . export_escape((string) ($summary['riskLabel'] ?? 'Sem dados')) . '</em></article>
                   <article class="pdf-metric"><span>PARTICIPACAO</span><strong>' . export_format_int((int) ($summary['participationRate'] ?? 0)) . '%</strong><em>' . export_format_int((int) ($summary['completedSessions'] ?? 0)) . ' sessoes concluidas</em></article>
                   <article class="pdf-metric"><span>CONFORMIDADE</span><strong>' . export_format_int((int) ($summary['complianceRate'] ?? 0)) . '%</strong><em>' . export_format_int((int) ($summary['totalSessions'] ?? 0)) . ' sessoes no periodo</em></article>
-                  <article class="pdf-metric"><span>SETORES CRITICOS</span><strong>' . export_format_int((int) ($summary['criticalSectorsCount'] ?? 0)) . '</strong><em>Demandam acao prioritaria</em></article>
+                  <article class="pdf-metric"><span>FATORES NO PGR</span><strong>' . export_format_int((int) ($summary['pgrFactorsCount'] ?? 0)) . '</strong><em>' . export_escape((string) ($summary['pgrLabel'] ?? 'Sem dados')) . '</em></article>
                 </div>
                 <div class="pdf-grid-2">
                   <article class="pdf-card">
@@ -879,9 +1030,40 @@ function export_pdf_render(array $payload, array $sections): string
                     </div>
                   </article>
                 </div>
+                <div class="pdf-grid-2 pdf-grid-2--top">
+                  <article class="pdf-card">
+                    <h3>Metodologia aplicada</h3>
+                    <div class="pdf-factor-list">' . $methodologyRows . '</div>
+                  </article>
+                  <article class="pdf-card">
+                    <h3>Formula consolidada</h3>
+                    <div class="pdf-distribution-list">
+                      <div><span>Probabilidade media</span><strong>' . export_format_decimal((float) ($summary['averageProbability'] ?? 0)) . '</strong></div>
+                      <div><span>Efeito medio</span><strong>' . export_format_decimal((float) ($summary['averageEffect'] ?? 0)) . '</strong></div>
+                      <div><span>Resultado do risco</span><strong>' . export_format_decimal((float) ($summary['riskScore'] ?? 0)) . '</strong></div>
+                    </div>
+                    <p class="pdf-paragraph pdf-paragraph--compact">' . export_escape((string) ($methodology['pgrCriterion'] ?? '')) . '</p>
+                  </article>
+                </div>
                 <div class="pdf-card pdf-card--spaced">
                   <h3>Perguntas com maior media</h3>
                   ' . export_pdf_build_question_rows($questionRankings) . '
+                </div>
+                <div class="pdf-card pdf-card--spaced">
+                  <h3>Perguntas aplicadas</h3>
+                  <table class="pdf-table">
+                    <thead>
+                      <tr>
+                        <th>Pergunta</th>
+                        <th>Fator</th>
+                        <th>Efeito</th>
+                        <th>Probabilidade</th>
+                        <th>Resultado</th>
+                        <th>Classificacao</th>
+                      </tr>
+                    </thead>
+                    <tbody>' . $appliedQuestionRows . '</tbody>
+                  </table>
                 </div>
                 <span class="page__number">Pagina ' . $pageNumber . '</span>
               </section>
@@ -940,6 +1122,9 @@ function export_pdf_render(array $payload, array $sections): string
 
         if ($key === 'heatmap') {
             $mappedFactors = '';
+            $methodFactorRows = '';
+            $matrixRows = '';
+            $factorTableRows = '';
 
             foreach ($heatmapItems as $item) {
                 $mappedFactors .= '
@@ -953,18 +1138,96 @@ function export_pdf_render(array $payload, array $sections): string
                 ';
             }
 
+            foreach (($methodology['factorCatalog'] ?? []) as $factor) {
+                $methodFactorRows .= '
+                  <div class="pdf-factor-row">
+                    <i>' . export_format_int((int) ($factor['effect'] ?? 0)) . '</i>
+                    <div>
+                      <strong>' . export_escape((string) ($factor['factorName'] ?? 'Fator')) . '</strong>
+                      <span>' . export_escape((string) ($factor['effectDescription'] ?? '')) . '</span>
+                    </div>
+                  </div>
+                ';
+            }
+
+            foreach (($methodology['matrix'] ?? []) as $index => $item) {
+                $matrixRows .= '
+                  <div class="pdf-factor-row">
+                    <i>' . ($index + 1) . '</i>
+                    <div>
+                      <strong>' . export_escape((string) ($item['range'] ?? '')) . ' - ' . export_escape((string) ($item['label'] ?? 'Sem dados')) . '</strong>
+                      <span>' . export_escape((string) ($item['pgrLabel'] ?? '')) . '</span>
+                    </div>
+                  </div>
+                ';
+            }
+
+            foreach ($factorResults as $item) {
+                $factorTableRows .= '
+                  <tr>
+                    <td>' . export_escape((string) ($item['factorName'] ?? 'Fator')) . '</td>
+                    <td>' . export_escape((string) (($item['scopeName'] ?? $item['sectorName'] ?? '') ?: 'Empresa')) . '</td>
+                    <td>' . export_format_decimal((float) ($item['probability'] ?? 0)) . '</td>
+                    <td>' . export_format_int((int) ($item['effect'] ?? 0)) . '</td>
+                    <td>' . export_format_decimal((float) ($item['riskScore'] ?? 0)) . '</td>
+                    <td>' . export_pdf_badge((string) ($item['riskLabel'] ?? 'Sem dados'), (string) ($item['riskSlug'] ?? 'neutral')) . '</td>
+                    <td>' . export_escape((string) ($item['pgrLabel'] ?? 'Sem dados')) . '</td>
+                  </tr>
+                ';
+            }
+
+            if ($methodFactorRows === '') {
+                $methodFactorRows = '<div class="pdf-empty">Nenhum fator metodologico foi identificado para o formulario selecionado.</div>';
+            }
+
+            if ($matrixRows === '') {
+                $matrixRows = '<div class="pdf-empty">A matriz de classificacao nao esta disponivel para o recorte atual.</div>';
+            }
+
             if ($mappedFactors === '') {
                 $mappedFactors = '<div class="pdf-empty">Nenhum fator mapeado com base nas respostas atuais.</div>';
+            }
+
+            if ($factorTableRows === '') {
+                $factorTableRows = '<tr><td colspan="7" class="pdf-empty-cell">Nao ha fatores consolidados suficientes para exibir o calculo do risco.</td></tr>';
             }
 
             $pagesMarkup .= '
               <section class="page">
                 <h2 class="pdf-section-title">Matriz de Risco Geral</h2>
-                <p class="pdf-paragraph">A matriz cruza recorrencia e impacto percebido. Os itens posicionados mais acima e a direita devem ser acompanhados primeiro.</p>
+                <p class="pdf-paragraph">A matriz cruza a probabilidade media das respostas (escala de 1 a 5) com o efeito fixo atribuido ao fator psicossocial. O resultado final do risco e calculado por probabilidade x efeito.</p>
+                <div class="pdf-grid-2 pdf-grid-2--top">
+                  <article class="pdf-card">
+                    <h3>Definicao do efeito por fator</h3>
+                    <div class="pdf-factor-list">' . $methodFactorRows . '</div>
+                  </article>
+                  <article class="pdf-card">
+                    <h3>Classificacao da matriz e criterio do PGR</h3>
+                    <div class="pdf-factor-list">' . $matrixRows . '</div>
+                    <p class="pdf-paragraph pdf-paragraph--compact">' . export_escape((string) ($methodology['pgrCriterion'] ?? '')) . '</p>
+                  </article>
+                </div>
                 ' . export_pdf_build_heatmap_markup($heatmapItems) . '
                 <div class="pdf-card pdf-card--spaced">
                   <h3>Fatores mapeados</h3>
                   <div class="pdf-factor-list">' . $mappedFactors . '</div>
+                </div>
+                <div class="pdf-card pdf-card--spaced">
+                  <h3>Resultado consolidado do risco</h3>
+                  <table class="pdf-table">
+                    <thead>
+                      <tr>
+                        <th>Fator</th>
+                        <th>Escopo</th>
+                        <th>Probabilidade</th>
+                        <th>Efeito</th>
+                        <th>Resultado</th>
+                        <th>Classificacao</th>
+                        <th>PGR</th>
+                      </tr>
+                    </thead>
+                    <tbody>' . $factorTableRows . '</tbody>
+                  </table>
                 </div>
                 <span class="page__number">Pagina ' . $pageNumber . '</span>
               </section>
@@ -974,6 +1237,7 @@ function export_pdf_render(array $payload, array $sections): string
 
         if ($key === 'actionPlan') {
             $actionRows = '';
+            $finalConsiderationRows = '';
 
             foreach ($actionPlan as $item) {
                 $actionRows .= '
@@ -983,37 +1247,51 @@ function export_pdf_render(array $payload, array $sections): string
                     <td>' . export_escape((string) ($item['recommendedAction'] ?? '')) . '</td>
                     <td>' . export_escape((string) ($item['deadline'] ?? '')) . '</td>
                     <td>' . export_pdf_badge((string) ($item['priorityLabel'] ?? 'Monitorar'), (string) ($item['prioritySlug'] ?? 'neutral')) . '</td>
+                    <td>' . export_escape((string) ($item['pgrLabel'] ?? 'Sem dados')) . '</td>
                   </tr>
                 ';
             }
 
+            foreach (($finalConsiderations['paragraphs'] ?? []) as $paragraph) {
+                $finalConsiderationRows .= '<p>' . export_escape((string) $paragraph) . '</p>';
+            }
+
             if ($actionRows === '') {
-                $actionRows = '<tr><td colspan="5" class="pdf-empty-cell">Nenhuma ação foi gerada para os filtros selecionados.</td></tr>';
+                $actionRows = '<tr><td colspan="6" class="pdf-empty-cell">Nenhuma acao foi gerada para os filtros selecionados.</td></tr>';
+            }
+
+            if ($finalConsiderationRows === '') {
+                $finalConsiderationRows = '<p>Nao ha consideracoes finais disponiveis para o recorte atual.</p>';
             }
 
             $pagesMarkup .= '
               <section class="page">
-                <h2 class="pdf-section-title">Plano de Ação Recomendado</h2>
-                <p class="pdf-paragraph">As ações abaixo seguem o consolidado atual de respostas. Quando existir plano manual salvo, ele será priorizado no relatório.</p>
+                <h2 class="pdf-section-title">Plano de Acao Recomendado</h2>
+                <p class="pdf-paragraph">As acoes abaixo seguem o consolidado atual de respostas. Quando existir plano manual salvo, ele sera priorizado no relatorio.</p>
                 <div class="pdf-card pdf-card--spaced">
                   <table class="pdf-table">
                     <thead>
                       <tr>
                         <th>Fator</th>
                         <th>Setor</th>
-                        <th>Ação recomendada</th>
+                        <th>Acao recomendada</th>
                         <th>Prazo</th>
                         <th>Status</th>
+                        <th>PGR</th>
                       </tr>
                     </thead>
                     <tbody>' . $actionRows . '</tbody>
                   </table>
                 </div>
+                <div class="pdf-note-card">
+                  <strong>' . export_escape((string) ($finalConsiderations['title'] ?? 'Consideracoes finais')) . '</strong>
+                  ' . $finalConsiderationRows . '
+                </div>
                 <div class="pdf-signature-card">
-                  <strong>Assinaturas e validação</strong>
-                  <p>Documento gerado a partir dos dados consolidados do sistema AvalieSST para apoio à tomada de decisão.</p>
+                  <strong>Assinaturas e validacao</strong>
+                  <p>Documento gerado a partir dos dados consolidados do sistema AvalieSST para apoio a tomada de decisao.</p>
                   <div class="pdf-signatures">
-                    <div><span></span><strong>Responsável SST</strong><small>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</small></div>
+                    <div><span></span><strong>Responsavel SST</strong><small>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</small></div>
                     <div><span></span><strong>Diretoria</strong><small>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</small></div>
                   </div>
                 </div>
@@ -1029,501 +1307,18 @@ function export_pdf_render(array $payload, array $sections): string
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Relatorio AvalieSST</title>
-  <style>
-    :root {
-      color-scheme: light;
-    }
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      margin: 0;
-      padding: 24px;
-      background: #eef3fb;
-      color: #162033;
-      font-family: Arial, sans-serif;
-    }
-    .page {
-      position: relative;
-      width: min(100%, 840px);
-      min-height: 1120px;
-      margin: 0 auto 24px;
-      padding: 28px 30px 34px;
-      background: #ffffff;
-      border: 1px solid #dfe7f2;
-      border-radius: 18px;
-      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-      break-after: page;
-      page-break-after: always;
-      page-break-inside: avoid;
-    }
-    .page:last-child {
-      break-after: auto;
-      page-break-after: auto;
-      margin-bottom: 0;
-    }
-    .page--cover {
-      min-height: 1120px;
-      padding-top: 24px;
-      display: flex;
-      flex-direction: column;
-    }
-    .page__topmeta {
-      color: #97a3b5;
-      font-size: 12px;
-      text-align: right;
-    }
-    .page__number {
-      position: absolute;
-      right: 30px;
-      bottom: 18px;
-      color: #97a3b5;
-      font-size: 12px;
-    }
-    .pdf-brand img {
-      width: 190px;
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin-top: 52px;
-    }
-    .pdf-kicker {
-      display: block;
-      margin-top: 24px;
-      color: #2a7bff;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-    h1 {
-      max-width: 470px;
-      margin: 10px 0 0;
-      font-size: 42px;
-      line-height: 1.08;
-      letter-spacing: -0.05em;
-    }
-    h2 {
-      display: inline-block;
-      margin: 0;
-      padding-bottom: 6px;
-      border-bottom: 3px solid #2a7bff;
-      font-size: 28px;
-    }
-    h3 {
-      margin: 0 0 12px;
-      font-size: 18px;
-    }
-    .pdf-line {
-      display: block;
-      width: 80px;
-      height: 4px;
-      margin-top: 16px;
-      border-radius: 999px;
-      background: #2a7bff;
-    }
-    .pdf-cover-meta {
-      margin-top: 28px;
-      display: grid;
-      gap: 16px;
-      padding-bottom: 24px;
-    }
-    .pdf-cover-meta span,
-    .pdf-cover-meta strong {
-      display: block;
-    }
-    .pdf-cover-meta span {
-      color: #8c97a8;
-      font-size: 13px;
-      font-weight: 700;
-    }
-    .pdf-cover-meta strong {
-      margin-top: 4px;
-      color: #1e2839;
-      font-size: 16px;
-    }
-    .pdf-footer {
-      margin-top: auto;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      padding-top: 14px;
-      border-top: 1px solid #e3eaf4;
-    }
-    .pdf-footer strong,
-    .pdf-footer span {
-      display: block;
-    }
-    .pdf-footer div span {
-      margin-top: 4px;
-      color: #8793a7;
-      font-size: 12px;
-    }
-    .pdf-footer > span {
-      color: #97a3b5;
-      font-size: 12px;
-    }
-    .pdf-index {
-      margin-top: 18px;
-    }
-    .pdf-index-row {
-      min-height: 34px;
-      border-bottom: 1px solid #edf1f6;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      color: #344053;
-      font-size: 14px;
-    }
-    .pdf-index-row strong {
-      color: #8e98a9;
-      font-weight: 400;
-    }
-    .pdf-note-card,
-    .pdf-card,
-    .pdf-signature-card {
-      margin-top: 18px;
-      padding: 16px 18px;
-      border: 1px solid #e2eaf4;
-      border-radius: 14px;
-      background: #fbfdff;
-    }
-    .pdf-note-card strong,
-    .pdf-note-card p {
-      display: block;
-    }
-    .pdf-note-card p,
-    .pdf-paragraph,
-    .pdf-signature-card p {
-      color: #546174;
-      line-height: 1.6;
-    }
-    .pdf-paragraph {
-      margin: 16px 0 0;
-      max-width: 620px;
-      font-size: 14px;
-    }
-    .pdf-metrics {
-      margin-top: 20px;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
-    .pdf-metric {
-      padding: 14px 16px;
-      border: 1px solid #e4eaf4;
-      border-radius: 14px;
-      background: #ffffff;
-    }
-    .pdf-metric span,
-    .pdf-metric strong,
-    .pdf-metric em {
-      display: block;
-    }
-    .pdf-metric span {
-      color: #8692a5;
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .pdf-metric strong {
-      margin-top: 8px;
-      color: #1d2739;
-      font-size: 28px;
-      line-height: 1;
-    }
-    .pdf-metric em {
-      margin-top: 6px;
-      color: #4f6278;
-      font-size: 12px;
-      font-style: normal;
-      font-weight: 700;
-    }
-    .pdf-grid-2 {
-      margin-top: 18px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .pdf-card--spaced {
-      margin-top: 18px;
-    }
-    .pdf-distribution-list {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
-    }
-    .pdf-distribution-list div {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #edf1f6;
-      color: #415065;
-    }
-    .pdf-distribution-list div:last-child {
-      padding-bottom: 0;
-      border-bottom: 0;
-    }
-    .pdf-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .pdf-table th,
-    .pdf-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #e8eef6;
-      text-align: left;
-      vertical-align: top;
-      font-size: 13px;
-    }
-    .pdf-table th {
-      color: #6d7a8d;
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .pdf-empty,
-    .pdf-empty-cell {
-      color: #7a8798;
-      text-align: center;
-      padding: 14px;
-    }
-    .pdf-pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 24px;
-      padding: 0 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-    .pdf-pill.is-low {
-      background: #dcfce7;
-      color: #15803d;
-    }
-    .pdf-pill.is-medium {
-      background: #fef3c7;
-      color: #b45309;
-    }
-    .pdf-pill.is-high {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-    .pdf-pill.is-neutral {
-      background: #e2e8f0;
-      color: #475569;
-    }
-    .pdf-list-card {
-      display: grid;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .pdf-list-row {
-      display: grid;
-      grid-template-columns: 26px minmax(0, 1fr) auto;
-      gap: 10px;
-      align-items: center;
-      padding: 12px;
-      border: 1px solid #e5ebf4;
-      border-radius: 12px;
-      background: #ffffff;
-    }
-    .pdf-list-row__rank {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      background: #eff4fb;
-      color: #2e3a4d;
-      display: grid;
-      place-items: center;
-      font-size: 13px;
-      font-weight: 800;
-    }
-    .pdf-list-row__copy strong,
-    .pdf-list-row__copy span,
-    .pdf-list-row__meta strong {
-      display: block;
-    }
-    .pdf-list-row__copy strong {
-      color: #243044;
-      font-size: 13px;
-    }
-    .pdf-list-row__copy span {
-      margin-top: 4px;
-      color: #8692a5;
-      font-size: 12px;
-    }
-    .pdf-list-row__meta {
-      display: grid;
-      gap: 6px;
-      justify-items: end;
-    }
-    .pdf-list-row__meta strong {
-      color: #243044;
-      font-size: 13px;
-    }
-    .pdf-heatmap-wrap {
-      position: relative;
-      width: fit-content;
-      margin: 22px auto 0;
-      padding: 0 0 36px 36px;
-    }
-    .pdf-heatmap-grid {
-      position: relative;
-      width: 290px;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 2px;
-      background: #ffffff;
-    }
-    .pdf-heatmap-cell {
-      aspect-ratio: 1;
-      display: grid;
-      place-items: center;
-      color: rgba(34, 48, 71, 0.68);
-      font-size: 11px;
-      font-weight: 800;
-    }
-    .pdf-g4 { background: #24ca5d; color: #ffffff; }
-    .pdf-g3 { background: #4dd976; }
-    .pdf-g2 { background: #77e39b; }
-    .pdf-g1 { background: #a8ecc3; }
-    .pdf-y1 { background: #fff2a3; }
-    .pdf-y2 { background: #ffe76b; }
-    .pdf-o1 { background: #ffa5a5; }
-    .pdf-r1 { background: #f86d6d; color: #ffffff; }
-    .pdf-r2 { background: #f44343; color: #ffffff; }
-    .pdf-heatmap-axis {
-      position: absolute;
-      color: #7f8a9d;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-    }
-    .pdf-heatmap-axis--left {
-      top: 50%;
-      left: 0;
-      transform: translateY(-50%) rotate(-90deg);
-      transform-origin: left top;
-    }
-    .pdf-heatmap-axis--bottom {
-      right: 0;
-      bottom: 0;
-    }
-    .pdf-heatmap-marker {
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      border-radius: 999px;
-      background: #1c2740;
-      color: #ffffff;
-      display: grid;
-      place-items: center;
-      font-size: 10px;
-      font-weight: 800;
-      transform: translate(50%, -50%);
-    }
-    .pdf-factor-list {
-      display: grid;
-      gap: 12px;
-    }
-    .pdf-factor-row {
-      display: grid;
-      grid-template-columns: 20px minmax(0, 1fr);
-      gap: 10px;
-      align-items: start;
-    }
-    .pdf-factor-row i {
-      width: 20px;
-      height: 20px;
-      border-radius: 999px;
-      background: #1c2740;
-      color: #ffffff;
-      display: grid;
-      place-items: center;
-      font-size: 11px;
-      font-style: normal;
-      font-weight: 800;
-    }
-    .pdf-factor-row strong,
-    .pdf-factor-row span {
-      display: block;
-    }
-    .pdf-factor-row strong {
-      color: #293448;
-      font-size: 13px;
-    }
-    .pdf-factor-row span {
-      margin-top: 4px;
-      color: #7a8698;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-    .pdf-signature-card strong,
-    .pdf-signature-card p {
-      display: block;
-    }
-    .pdf-signatures {
-      margin-top: 56px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 24px;
-    }
-    .pdf-signatures span {
-      display: block;
-      height: 1px;
-      margin-bottom: 8px;
-      background: #c6d0de;
-    }
-    .pdf-signatures strong,
-    .pdf-signatures small {
-      display: block;
-      text-align: center;
-    }
-    .pdf-signatures strong {
-      font-size: 12px;
-    }
-    .pdf-signatures small {
-      margin-top: 4px;
-      color: #8793a7;
-      font-size: 11px;
-    }
-    @page {
-      size: A4 portrait;
-      margin: 10mm;
-    }
-    @media print {
-      body {
-        padding: 0;
-        background: #ffffff;
-      }
-      .page {
-        width: auto;
-        max-width: none;
-        margin: 0 0 8mm;
-        min-height: 0;
-        padding: 28px 30px 34px;
-        border: 0;
-        border-radius: 0;
-        box-shadow: none;
-      }
-      .page--cover {
-        min-height: 257mm;
-      }
-      .page:last-child {
-        margin-bottom: 0;
-      }
-    }
-  </style>
+  <style>' . $printStylesheet . '</style>
 </head>
-<body>' . $pagesMarkup . '</body>
+<body>
+  <div class="print-toolbar">
+    <div class="print-toolbar__copy">
+      <strong>Versao pronta para PDF</strong>
+      <span>Para ocultar URL, data e outros elementos do navegador no PDF, desative "Cabecalhos e rodapes" na janela de impressao.</span>
+    </div>
+    <button class="print-toolbar__button" type="button" onclick="window.print()">Imprimir / Salvar PDF</button>
+  </div>
+  <main class="print-document">' . $pagesMarkup . '</main>
+</body>
 </html>';
 }
 
