@@ -4,11 +4,38 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 
+function company_only_digits(string $value): string
+{
+    return preg_replace('/\D+/', '', $value) ?? '';
+}
+
+function company_format_cnpj(string $value): string
+{
+    $digits = substr(company_only_digits($value), 0, 14);
+
+    if (strlen($digits) !== 14) {
+        return $digits;
+    }
+
+    return preg_replace('/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/', '$1.$2.$3/$4-$5', $digits) ?: $digits;
+}
+
+function company_format_cep(string $value): string
+{
+    $digits = substr(company_only_digits($value), 0, 8);
+
+    if (strlen($digits) !== 8) {
+        return $digits;
+    }
+
+    return preg_replace('/^(\d{5})(\d{3})$/', '$1-$2', $digits) ?: $digits;
+}
+
 function fetch_companies(PDO $pdo, ?int $companyFilterId = null): array
 {
     if ($companyFilterId !== null && $companyFilterId > 0) {
         $companiesStatement = $pdo->prepare(
-            'SELECT c.id, c.name, c.cnpj, c.status, c.employees_count,
+            'SELECT c.id, c.name, c.cnpj, c.cep, c.street, c.street_number, c.status, c.employees_count,
                     c.active_form_id,
                     f.public_code AS active_form_code,
                     f.name AS active_form_name
@@ -21,7 +48,7 @@ function fetch_companies(PDO $pdo, ?int $companyFilterId = null): array
         $companiesStatement->execute(['company_id' => $companyFilterId]);
     } else {
         $companiesStatement = $pdo->query(
-            'SELECT c.id, c.name, c.cnpj, c.status, c.employees_count,
+            'SELECT c.id, c.name, c.cnpj, c.cep, c.street, c.street_number, c.status, c.employees_count,
                     c.active_form_id,
                     f.public_code AS active_form_code,
                     f.name AS active_form_name
@@ -42,6 +69,9 @@ function fetch_companies(PDO $pdo, ?int $companyFilterId = null): array
             'id' => (string) $companyId,
             'name' => (string) $row['name'],
             'cnpj' => (string) $row['cnpj'],
+            'cep' => (string) ($row['cep'] ?? ''),
+            'street' => (string) ($row['street'] ?? ''),
+            'streetNumber' => (string) ($row['street_number'] ?? ''),
             'status' => normalize_status((string) $row['status']),
             'employees' => (int) $row['employees_count'],
             'activeFormId' => $row['active_form_id'] !== null ? (int) $row['active_form_id'] : null,
@@ -107,7 +137,14 @@ function fetch_companies(PDO $pdo, ?int $companyFilterId = null): array
 function parse_company_payload(array $input): array
 {
     $name = trim((string) ($input['name'] ?? ''));
-    $cnpj = trim((string) ($input['cnpj'] ?? ''));
+    $rawCnpj = $input['cnpj'] ?? $input['companyCnpj'] ?? '';
+    $rawCep = $input['cep'] ?? $input['companyCep'] ?? '';
+    $cnpjDigits = company_only_digits(trim((string) $rawCnpj));
+    $cepDigits = company_only_digits(trim((string) $rawCep));
+    $cnpj = company_format_cnpj($cnpjDigits);
+    $cep = company_format_cep($cepDigits);
+    $street = trim((string) ($input['street'] ?? ''));
+    $streetNumber = trim((string) ($input['streetNumber'] ?? ''));
     $status = normalize_status((string) ($input['status'] ?? 'active'));
     $employees = max(1, (int) ($input['employees'] ?? 0));
     $sectors = normalize_string_list(is_array($input['sectors'] ?? null) ? $input['sectors'] : []);
@@ -120,10 +157,31 @@ function parse_company_payload(array $input): array
         ]);
     }
 
-    if ($cnpj === '') {
+    if ($cnpjDigits === '' || strlen($cnpjDigits) !== 14) {
         send_json(422, [
             'success' => false,
-            'message' => 'Informe o CNPJ da empresa.',
+            'message' => 'Informe um CNPJ valido.',
+        ]);
+    }
+
+    if ($cepDigits === '' || strlen($cepDigits) !== 8) {
+        send_json(422, [
+            'success' => false,
+            'message' => 'Informe um CEP valido.',
+        ]);
+    }
+
+    if ($street === '') {
+        send_json(422, [
+            'success' => false,
+            'message' => 'Informe a rua da empresa.',
+        ]);
+    }
+
+    if ($streetNumber === '') {
+        send_json(422, [
+            'success' => false,
+            'message' => 'Informe o numero da empresa.',
         ]);
     }
 
@@ -137,6 +195,9 @@ function parse_company_payload(array $input): array
     return [
         'name' => $name,
         'cnpj' => $cnpj,
+        'cep' => $cep,
+        'street' => $street,
+        'streetNumber' => $streetNumber,
         'status' => $status,
         'employees' => $employees,
         'sectors' => $sectors,
@@ -202,12 +263,15 @@ if ($method === 'POST') {
 
     try {
         $insertStatement = $pdo->prepare(
-            'INSERT INTO companies (name, cnpj, status, employees_count, active_form_id)
-             VALUES (:name, :cnpj, :status, :employees_count, :active_form_id)'
+            'INSERT INTO companies (name, cnpj, cep, street, street_number, status, employees_count, active_form_id)
+             VALUES (:name, :cnpj, :cep, :street, :street_number, :status, :employees_count, :active_form_id)'
         );
         $insertStatement->execute([
             'name' => $payload['name'],
             'cnpj' => $payload['cnpj'],
+            'cep' => $payload['cep'],
+            'street' => $payload['street'],
+            'street_number' => $payload['streetNumber'],
             'status' => $payload['status'],
             'employees_count' => $payload['employees'],
             'active_form_id' => $payload['activeFormId'],
@@ -252,6 +316,9 @@ if ($method === 'PUT') {
             'UPDATE companies
              SET name = :name,
                  cnpj = :cnpj,
+                 cep = :cep,
+                 street = :street,
+                 street_number = :street_number,
                  status = :status,
                  employees_count = :employees_count,
                  active_form_id = :active_form_id,
@@ -262,6 +329,9 @@ if ($method === 'PUT') {
             'id' => $companyId,
             'name' => $payload['name'],
             'cnpj' => $payload['cnpj'],
+            'cep' => $payload['cep'],
+            'street' => $payload['street'],
+            'street_number' => $payload['streetNumber'],
             'status' => $payload['status'],
             'employees_count' => $payload['employees'],
             'active_form_id' => $payload['activeFormId'],

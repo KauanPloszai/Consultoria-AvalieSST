@@ -87,6 +87,62 @@ function removeInterfaceElements(selector) {
   });
 }
 
+function closeResponsiveNavigation() {
+  document.body.classList.remove("is-mobile-menu-open");
+  document.querySelector(".mobile-menu-toggle")?.setAttribute("aria-expanded", "false");
+}
+
+function setupResponsiveNavigation() {
+  const header = document.querySelector(".app-header");
+  const brand = document.querySelector(".app-header__brand");
+  const sidebar = document.querySelector(".sidebar");
+
+  if (!header || !brand || !sidebar || document.querySelector(".mobile-menu-toggle")) {
+    return;
+  }
+
+  const toggleButton = document.createElement("button");
+  toggleButton.className = "mobile-menu-toggle";
+  toggleButton.type = "button";
+  toggleButton.setAttribute("aria-label", "Abrir menu principal");
+  toggleButton.setAttribute("aria-expanded", "false");
+  toggleButton.innerHTML = `
+    <span aria-hidden="true"></span>
+    <span aria-hidden="true"></span>
+    <span aria-hidden="true"></span>
+  `;
+
+  const backdrop = document.createElement("button");
+  backdrop.className = "mobile-nav-backdrop";
+  backdrop.type = "button";
+  backdrop.setAttribute("aria-label", "Fechar menu");
+
+  brand.insertAdjacentElement("afterend", toggleButton);
+  document.body.appendChild(backdrop);
+
+  toggleButton.addEventListener("click", () => {
+    const isOpen = document.body.classList.toggle("is-mobile-menu-open");
+    toggleButton.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  backdrop.addEventListener("click", closeResponsiveNavigation);
+  sidebar.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", closeResponsiveNavigation);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeResponsiveNavigation();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 1024) {
+      closeResponsiveNavigation();
+    }
+  });
+}
+
 function parseDashboardFiltersFromUrl() {
   const params = new URLSearchParams(window.location.search);
 
@@ -457,6 +513,32 @@ function renderDashboardDonut(statusBreakdown) {
     .join("");
 }
 
+function buildDashboardScopeSubtitle(row, company) {
+  const companyName = company?.name || "Empresa";
+
+  if (row.type === "function") {
+    const sectorName = row.sectorName || row.parentSectorName || "";
+
+    return sectorName ? `Função • ${sectorName} • ${companyName}` : `Função • ${companyName}`;
+  }
+
+  return `Setor • ${companyName}`;
+}
+
+function buildDashboardScopeTitle(row) {
+  if (row.displayName) {
+    return row.displayName;
+  }
+
+  if (row.type === "function") {
+    const sectorName = row.sectorName || row.parentSectorName || "";
+
+    return sectorName ? `${sectorName} / ${row.name}` : row.name;
+  }
+
+  return row.name;
+}
+
 function renderDashboardPlanRows(rows, company) {
   if (!dashboardPlanBody) {
     return;
@@ -474,7 +556,8 @@ function renderDashboardPlanRows(rows, company) {
 
   dashboardPlanBody.innerHTML = normalizedRows
     .map((row) => {
-      const scopeLabel = row.type === "function" ? "Função" : "Setor";
+      const scopeTitle = buildDashboardScopeTitle(row);
+      const scopeSubtitle = buildDashboardScopeSubtitle(row, company);
       const actionUrl = row.actionUrl || "setores-funcao.html";
 
       return `
@@ -486,8 +569,8 @@ function renderDashboardPlanRows(rows, company) {
               </svg>
             </span>
             <div class="company-meta">
-              <strong>${escapeHtml(row.name)}</strong>
-              <span>${scopeLabel} • ${escapeHtml(company?.name || "Empresa")}</span>
+              <strong>${escapeHtml(scopeTitle)}</strong>
+              <span>${escapeHtml(scopeSubtitle)}</span>
             </div>
           </div>
           <span class="table-row__count">${Number(row.employees || 0)}</span>
@@ -548,6 +631,7 @@ async function loadDashboard(options = {}) {
   }
 }
 
+setupResponsiveNavigation();
 window.appSessionPromise = loadSession();
 
 window.addEventListener("app:session-ready", (event) => {

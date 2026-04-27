@@ -207,6 +207,24 @@ function migrate_schema(PDO $pdo): void
         '`active_form_id` INT UNSIGNED NULL AFTER `employees_count`'
     );
     schema_ensure_index($pdo, 'companies', 'idx_companies_active_form', '`active_form_id`');
+    schema_ensure_column(
+        $pdo,
+        'companies',
+        'cep',
+        '`cep` VARCHAR(20) NOT NULL DEFAULT "" AFTER `cnpj`'
+    );
+    schema_ensure_column(
+        $pdo,
+        'companies',
+        'street',
+        '`street` VARCHAR(180) NOT NULL DEFAULT "" AFTER `cep`'
+    );
+    schema_ensure_column(
+        $pdo,
+        'companies',
+        'street_number',
+        '`street_number` VARCHAR(30) NOT NULL DEFAULT "" AFTER `street`'
+    );
 
     schema_ensure_column(
         $pdo,

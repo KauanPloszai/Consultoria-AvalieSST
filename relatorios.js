@@ -12,8 +12,12 @@ const reportSectionInputs = document.querySelectorAll("[data-report-section]");
 const REPORT_SECTION_META = {
   cover: { label: "Capa e Índice" },
   summary: { label: "Resumo Executivo e Métricas Principais" },
+  summaryOverview: { label: "Resumo Executivo" },
+  summaryQuestions: { label: "Perguntas Aplicadas e Cálculos" },
   sectorAnalysis: { label: "Análise por Setor" },
   heatmap: { label: "Matriz de Risco Geral" },
+  heatmapOverview: { label: "Matriz de Risco" },
+  heatmapResults: { label: "Resultados da Matriz" },
   actionPlan: { label: "Plano de Ação Recomendado" },
 };
 
@@ -52,6 +56,30 @@ function formatPercent(value) {
 
 function formatInteger(value) {
   return new Intl.NumberFormat("pt-BR").format(Number(value || 0));
+}
+
+function onlyDigits(value) {
+  return String(value ?? "").replace(/\D+/g, "");
+}
+
+function formatCnpjDisplay(value) {
+  const digits = onlyDigits(value).slice(0, 14);
+
+  if (digits.length !== 14) {
+    return String(value ?? "").trim() || "Nao informado";
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+function formatCepDisplay(value) {
+  const digits = onlyDigits(value).slice(0, 8);
+
+  if (digits.length !== 8) {
+    return String(value ?? "").trim();
+  }
+
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
 }
 
 function getSelectedReportSections() {
@@ -169,6 +197,10 @@ function getReportPageSequence() {
   const sections = getSelectedReportSections();
   const pages = [];
   let currentPage = 1;
+  const pageKeysBySection = {
+    summary: ["summaryOverview", "summaryQuestions"],
+    heatmap: ["heatmapOverview", "heatmapResults"],
+  };
 
   if (sections.includes("cover")) {
     pages.push({ key: "cover", pageNumber: currentPage++ });
@@ -178,7 +210,9 @@ function getReportPageSequence() {
   sections
     .filter((section) => section !== "cover")
     .forEach((section) => {
-      pages.push({ key: section, pageNumber: currentPage++ });
+      (pageKeysBySection[section] || [section]).forEach((key) => {
+        pages.push({ key, parentKey: section, pageNumber: currentPage++ });
+      });
     });
 
   return pages;
@@ -232,6 +266,18 @@ function buildInlineBadges(items) {
         .join("")}
     </div>
   `;
+}
+
+function buildCompanyAddressLines(company) {
+  const street = String(company?.street || "").trim();
+  const streetNumber = String(company?.streetNumber || "").trim();
+  const cep = formatCepDisplay(company?.cep || "");
+  const primary = [street, streetNumber ? `Nº ${streetNumber}` : ""].filter(Boolean).join(", ");
+
+  return {
+    primary: primary || "Endereco nao informado",
+    secondary: cep ? `CEP ${cep}` : "",
+  };
 }
 
 function buildRiskPill(label, slug) {
@@ -375,6 +421,32 @@ function buildFactorResultsTable(items) {
             .join("")}
         </tbody>
       </table>
+    </div>
+  `;
+}
+
+function buildFactorEffectList(items) {
+  const normalizedItems = safeArray(items);
+
+  if (!normalizedItems.length) {
+    return '<div class="report-empty-state">Nenhum fator metodologico foi identificado para o formulario selecionado.</div>';
+  }
+
+  return `
+    <div class="report-effect-list">
+      ${normalizedItems
+        .map(
+          (factor) => `
+            <div class="report-effect-row">
+              <span class="report-effect-row__score">${formatInteger(factor.effect || 0)}</span>
+              <div class="report-effect-row__copy">
+                <strong>${escapeHtml(factor.factorName || "Fator psicossocial")}</strong>
+                <span>${escapeHtml(factor.effectDescription || "Efeito fixo definido pela metodologia do formulario.")}</span>
+              </div>
+            </div>
+          `,
+        )
+        .join("")}
     </div>
   `;
 }
@@ -565,6 +637,7 @@ function buildTopQuestionList(items, emptyMessage = "Nenhuma pergunta consolidad
 }
 
 function buildCoverPage(data, pageNumber) {
+  const address = buildCompanyAddressLines(data.company);
   const selectedFormName = data.company?.selectedFormName || data.company?.activeFormName || "Não vinculado";
 
   return `
@@ -580,6 +653,15 @@ function buildCoverPage(data, pageNumber) {
       <span class="report-cover-line" aria-hidden="true"></span>
 
       <div class="report-cover-meta">
+        <div>
+          <span>CNPJ</span>
+          <strong>${escapeHtml(formatCnpjDisplay(data.company?.cnpj || ""))}</strong>
+        </div>
+        <div class="report-cover-meta__item report-cover-meta__item--wide">
+          <span>ENDERECO REGISTRADO</span>
+          <strong>${escapeHtml(address.primary)}</strong>
+          ${address.secondary ? `<small>${escapeHtml(address.secondary)}</small>` : ""}
+        </div>
         <div>
           <span>ORGANIZAÇÃO AVALIADA</span>
           <strong>${escapeHtml(data.company?.name || "Empresa")}</strong>
@@ -634,16 +716,15 @@ function buildIndexPage(data, pageSequence, pageNumber) {
   `;
 }
 
-function buildSummaryPage(data, pageNumber) {
+function buildSummaryOverviewPage(data, pageNumber) {
   const summary = data.summary || {};
   const completionSeries = buildLineChart(data.completionSeries, { minimumMax: 5 });
   const riskSeries = buildLineChart(data.riskSeries, { minimumMax: 20 });
   const methodology = data.methodology || {};
-  const appliedQuestions = safeArray(data.appliedQuestions);
   const selectedFormName = data.company?.selectedFormName || data.company?.activeFormName || "Formulario nao vinculado";
 
   return `
-    <article class="report-page">
+    <article class="report-page report-page--summary">
       <section class="report-section report-section--spaced">
         <h3 class="report-section-title">Resumo Executivo</h3>
         <p class="report-paragraph">
@@ -704,6 +785,24 @@ function buildSummaryPage(data, pageNumber) {
           </article>
         </div>
 
+      </section>
+      <span class="report-page__number">Página ${pageNumber}</span>
+    </article>
+  `;
+}
+
+function buildSummaryQuestionsPage(data, pageNumber) {
+  const appliedQuestions = safeArray(data.appliedQuestions);
+
+  return `
+    <article class="report-page report-page--summary">
+      <section class="report-section report-section--spaced">
+        <h3 class="report-section-title">Perguntas Aplicadas e Cálculos</h3>
+        <p class="report-paragraph">
+          Esta página apresenta o status das coletas, as perguntas com maior média de risco
+          e a base usada para calcular probabilidade, efeito e classificação.
+        </p>
+
         <div class="report-chart-grid">
           <article class="report-chart-card">
             <span class="report-chart-card__title">Status das coletas</span>
@@ -711,7 +810,7 @@ function buildSummaryPage(data, pageNumber) {
           </article>
 
           <article class="report-chart-card">
-            <span class="report-chart-card__title">Perguntas com maior media de risco</span>
+            <span class="report-chart-card__title">Perguntas com maior média de risco</span>
             ${buildTopQuestionList(
               safeArray(data.questionRankings).slice(0, 5),
               "Ainda não existem perguntas suficientes respondidas para montar o ranking.",
@@ -720,10 +819,10 @@ function buildSummaryPage(data, pageNumber) {
         </div>
 
         <div class="report-note-card">
-          <strong>Perguntas aplicadas e calculo da probabilidade</strong>
+          <strong>Perguntas aplicadas e cálculo da probabilidade</strong>
           <p>
             Cada pergunta abaixo mostra o fator psicossocial associado, o efeito fixo utilizado
-            na metodologia e o resultado calculado com base na media real das respostas salvas.
+            na metodologia e o resultado calculado com base na média real das respostas salvas.
           </p>
         </div>
         ${buildAppliedQuestionsTable(appliedQuestions)}
@@ -879,10 +978,9 @@ function buildHeatmapMarkup(items) {
   `;
 }
 
-function buildHeatmapPage(data, pageNumber) {
+function buildHeatmapOverviewPage(data, pageNumber) {
   const heatmapItems = safeArray(data.heatmapItems);
   const methodology = data.methodology || {};
-  const factorResults = safeArray(data.factorResults);
 
   return `
     <article class="report-page">
@@ -898,19 +996,7 @@ function buildHeatmapPage(data, pageNumber) {
         <div class="report-chart-grid">
           <article class="report-chart-card">
             <span class="report-chart-card__title">Definicao do efeito por fator</span>
-            ${buildFactorResultsTable(
-              safeArray(methodology.factorCatalog).map((factor) => ({
-                factorName: factor.factorName,
-                scopeName: "Referencia metodologica",
-                probability: 0,
-                effect: factor.effect,
-                effectDescription: factor.effectDescription,
-                riskScore: 0,
-                riskLabel: "-",
-                riskSlug: "neutral",
-                pgrLabel: "-",
-              })),
-            )}
+            ${buildFactorEffectList(methodology.factorCatalog)}
           </article>
 
           <article class="report-chart-card">
@@ -939,7 +1025,24 @@ function buildHeatmapPage(data, pageNumber) {
             ? buildHeatmapMarkup(heatmapItems)
             : '<div class="report-empty-state">Não há respostas suficientes para montar a matriz de risco.</div>'
         }
+      </section>
+      <span class="report-page__number">Página ${pageNumber}</span>
+    </article>
+  `;
+}
 
+function buildHeatmapResultsPage(data, pageNumber) {
+  const heatmapItems = safeArray(data.heatmapItems);
+  const factorResults = safeArray(data.factorResults);
+
+  return `
+    <article class="report-page">
+      <section class="report-section">
+        <h3 class="report-section-title">Resultados da Matriz</h3>
+        <p class="report-paragraph">
+          Esta página reúne os fatores mapeados na matriz e o consolidado final usado para
+          definir classificação, prioridade e inclusão no PGR.
+        </p>
         <div class="mapped-factors-card">
           <strong>Fatores mapeados (Top 5)</strong>
           ${
@@ -1080,12 +1183,16 @@ function renderReportPreview(data) {
           return buildCoverPage(data, entry.pageNumber);
         case "index":
           return buildIndexPage(data, pageSequence, entry.pageNumber);
-        case "summary":
-          return buildSummaryPage(data, entry.pageNumber);
+        case "summaryOverview":
+          return buildSummaryOverviewPage(data, entry.pageNumber);
+        case "summaryQuestions":
+          return buildSummaryQuestionsPage(data, entry.pageNumber);
         case "sectorAnalysis":
           return buildSectorAnalysisPage(data, entry.pageNumber);
-        case "heatmap":
-          return buildHeatmapPage(data, entry.pageNumber);
+        case "heatmapOverview":
+          return buildHeatmapOverviewPage(data, entry.pageNumber);
+        case "heatmapResults":
+          return buildHeatmapResultsPage(data, entry.pageNumber);
         case "actionPlan":
           return buildActionPlanPage(data, entry.pageNumber);
         default:

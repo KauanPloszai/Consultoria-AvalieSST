@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AvaliESST | Nova Empresa</title>
-    <link rel="stylesheet" href="dashboard.css?v=20260421u5" />
+    <link rel="stylesheet" href="dashboard.css?v=20260425resp4" />
   </head>
   <body class="dashboard-body">
     <header class="app-header">
@@ -221,7 +221,7 @@
 
             <label class="company-builder__field">
               <span>CNPJ</span>
-              <input type="text" name="companyCnpj" placeholder="12.345.678/0001-90" data-company-cnpj />
+              <input type="text" name="companyCnpj" placeholder="12.345.678/0001-90" inputmode="numeric" maxlength="18" data-company-cnpj />
             </label>
 
             <label class="company-builder__field">
@@ -230,6 +230,21 @@
                 <option value="active">Ativo</option>
                 <option value="inactive">Inativo</option>
               </select>
+            </label>
+
+            <label class="company-builder__field">
+              <span>CEP</span>
+              <input type="text" name="companyCep" placeholder="00000-000" inputmode="numeric" maxlength="9" data-company-cep />
+            </label>
+
+            <label class="company-builder__field company-builder__field--wide">
+              <span>Rua</span>
+              <input type="text" name="companyStreet" placeholder="Ex.: Rua das Acacias" data-company-street />
+            </label>
+
+            <label class="company-builder__field">
+              <span>Numero</span>
+              <input type="text" name="companyStreetNumber" placeholder="123" data-company-street-number />
             </label>
 
             <label class="company-builder__field company-builder__field--wide">
@@ -259,7 +274,7 @@
     </div>
 
     <script src="api-client.js?v=20260421u2"></script>
-    <script src="dashboard.js?v=20260421ort1"></script>
-    <script src="nova-empresa.js"></script>
+    <script src="dashboard.js?v=20260425resp4"></script>
+    <script src="nova-empresa.js?v=20260425cep2"></script>
   </body>
 </html>

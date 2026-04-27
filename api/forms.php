@@ -259,10 +259,10 @@ if ($method === 'GET') {
     ]);
 }
 
-$input = read_json_input();
-$payload = parse_form_payload($input);
-
 if ($method === 'POST') {
+    $input = read_json_input();
+    $payload = parse_form_payload($input);
+
     $pdo->beginTransaction();
 
     try {
@@ -298,7 +298,91 @@ if ($method === 'POST') {
     ]);
 }
 
+if ($method === 'DELETE') {
+    $publicCode = trim((string) ($_GET['id'] ?? ''));
+
+    if ($publicCode === '') {
+        send_json(422, [
+            'success' => false,
+            'message' => 'Formulario invalido para exclusao.',
+        ]);
+    }
+
+    $formStatement = $pdo->prepare('SELECT id, name FROM forms WHERE public_code = :public_code LIMIT 1');
+    $formStatement->execute(['public_code' => $publicCode]);
+    $formRow = $formStatement->fetch();
+
+    if (!$formRow) {
+        send_json(404, [
+            'success' => false,
+            'message' => 'Formulario nao encontrado.',
+        ]);
+    }
+
+    $formId = (int) $formRow['id'];
+
+    $pdo->beginTransaction();
+
+    try {
+        $clearActiveStatement = $pdo->prepare(
+            'UPDATE companies
+             SET active_form_id = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE active_form_id = :form_id'
+        );
+        $clearActiveStatement->execute(['form_id' => $formId]);
+
+        $deleteAnswersStatement = $pdo->prepare(
+            'DELETE ans
+             FROM access_code_answers ans
+             INNER JOIN access_code_sessions s ON s.id = ans.session_id
+             INNER JOIN employee_access_codes ac ON ac.id = s.access_code_id
+             WHERE ac.form_id = :form_id'
+        );
+        $deleteAnswersStatement->execute(['form_id' => $formId]);
+
+        $deleteSessionsStatement = $pdo->prepare(
+            'DELETE s
+             FROM access_code_sessions s
+             INNER JOIN employee_access_codes ac ON ac.id = s.access_code_id
+             WHERE ac.form_id = :form_id'
+        );
+        $deleteSessionsStatement->execute(['form_id' => $formId]);
+
+        $deleteCodesStatement = $pdo->prepare('DELETE FROM employee_access_codes WHERE form_id = :form_id');
+        $deleteCodesStatement->execute(['form_id' => $formId]);
+
+        $deleteLinksStatement = $pdo->prepare('DELETE FROM company_form_links WHERE form_id = :form_id');
+        $deleteLinksStatement->execute(['form_id' => $formId]);
+
+        $deleteQuestionsStatement = $pdo->prepare('DELETE FROM form_questions WHERE form_id = :form_id');
+        $deleteQuestionsStatement->execute(['form_id' => $formId]);
+
+        $deleteStatement = $pdo->prepare('DELETE FROM forms WHERE id = :id');
+        $deleteStatement->execute(['id' => $formId]);
+
+        $pdo->commit();
+    } catch (Throwable $throwable) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        send_json(500, [
+            'success' => false,
+            'message' => 'Nao foi possivel excluir o formulario.',
+        ]);
+    }
+
+    send_json(200, [
+        'success' => true,
+        'message' => 'Formulario excluido com sucesso.',
+        'data' => fetch_forms($pdo),
+    ]);
+}
+
 if ($method === 'PUT') {
+    $input = read_json_input();
+    $payload = parse_form_payload($input);
     $publicCode = trim((string) ($input['id'] ?? $_GET['id'] ?? ''));
 
     if ($publicCode === '') {

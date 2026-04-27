@@ -67,6 +67,58 @@ button {
   display: block;
 }
 
+.mobile-menu-toggle,
+.mobile-nav-backdrop {
+  display: none;
+}
+
+.mobile-menu-toggle {
+  position: relative;
+  z-index: 100;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #cfd9e7;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #15213a;
+  place-items: center;
+  gap: 4px;
+  box-shadow: 0 10px 24px rgba(21, 33, 58, 0.08);
+  cursor: pointer;
+}
+
+.mobile-menu-toggle span {
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.mobile-menu-toggle[aria-expanded="true"] span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.mobile-menu-toggle[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-toggle[aria-expanded="true"] span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  border: 0;
+  background: rgba(9, 17, 31, 0.45);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
 .app-header__title span {
   display: block;
   color: #808999;
@@ -2707,7 +2759,7 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
 .form-modal {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 160;
 }
 
 .form-modal[hidden] {
@@ -3082,6 +3134,10 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
   gap: 12px;
 }
 
+.form-builder__actions:has(.form-builder__ghost--danger:not([hidden])) {
+  justify-content: space-between;
+}
+
 .form-builder__actions-group {
   display: flex;
   align-items: center;
@@ -3101,6 +3157,19 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
   border: 1px solid #d5ddea;
   background: #fff;
   color: #4c596b;
+}
+
+.form-builder__ghost--danger {
+  border-color: #f1c7c7;
+  background: #fff6f6;
+  color: #d94b4b;
+}
+
+.form-builder__ghost--danger:hover,
+.form-builder__ghost--danger:focus-visible {
+  border-color: #e9aaaa;
+  background: #ffecec;
+  color: #c93e3e;
 }
 
 .form-builder__primary {
@@ -4519,10 +4588,75 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
   }
 }
 
-@media (max-width: 860px) {
+@media (min-width: 861px) and (max-width: 1080px) {
+  .app-header__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(170px, 1fr));
+    justify-self: end;
+    width: min(100%, 440px);
+  }
+
+  .header-action {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 1024px) {
   .app-header {
-    grid-template-columns: 1fr;
-    gap: 14px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px 16px;
+    min-height: auto;
+    padding: 16px;
+  }
+
+  .app-header__brand {
+    grid-column: 1;
+    align-self: start;
+  }
+
+  .app-header__logo {
+    width: 112px;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-grid;
+    grid-column: 3;
+    justify-self: end;
+    align-self: start;
+  }
+
+  body.is-mobile-menu-open .mobile-nav-backdrop {
+    display: block;
+    pointer-events: auto;
+  }
+
+  body.is-mobile-menu-open {
+    overflow: hidden;
+  }
+
+  .app-header__title {
+    grid-column: 2 / 3;
+    min-width: 0;
+  }
+
+  .app-header__actions {
+    grid-column: 2 / 4;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(172px, 1fr));
+    justify-self: end;
+    align-items: stretch;
+    width: min(100%, 380px);
+    gap: 10px;
+  }
+
+  .header-action {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    text-align: center;
+    padding-inline: 12px;
   }
 
   .dashboard-shell {
@@ -4530,16 +4664,29 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
   }
 
   .sidebar {
-    padding: 12px;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 90;
+    width: min(86vw, 320px);
+    max-width: 320px;
+    padding: 22px 14px 16px;
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    overflow-y: auto;
+    box-shadow: 26px 0 54px rgba(8, 16, 31, 0.32);
   }
 
-  .sidebar__nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+  body.is-mobile-menu-open .sidebar {
+    transform: translateX(0);
   }
 
   .sidebar-link {
-    flex: 1 1 220px;
+    min-height: 48px;
+    font-size: 0.94rem;
+  }
+
+  .sidebar__footer {
+    margin-top: 28px;
   }
 
   .metrics-grid {
@@ -4580,8 +4727,72 @@ body[data-user-role="company"] .sidebar-link[href="relatorios.html"] {
     padding: 22px 18px 30px;
   }
 
-.report-cover-title {
+  .report-cover-title {
     font-size: 1.55rem;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 1024px) {
+  .metrics-grid,
+  .overview-grid,
+  .sector-stats-grid,
+  .access-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .app-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    padding: 18px 14px 14px;
+  }
+
+  .app-header__brand {
+    grid-column: 1;
+  }
+
+  .app-header__logo {
+    width: 102px;
+  }
+
+  .mobile-menu-toggle {
+    grid-column: 2;
+  }
+
+  .app-header__title {
+    grid-column: 1 / -1;
+  }
+
+  .app-header__title h1 {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .app-header__actions {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 260px);
+    justify-self: start;
+    justify-content: start;
+    width: min(100%, 260px);
+  }
+
+  .header-action {
+    min-height: 42px;
+    justify-content: center;
+  }
+
+  .dashboard-main {
+    padding: 10px;
+  }
+
+  .metric-card,
+  .chart-card,
+  .table-panel,
+  .section-banner,
+  .forms-card,
+  .company-card {
+    border-radius: 12px;
   }
 }
 

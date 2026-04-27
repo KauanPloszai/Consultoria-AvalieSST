@@ -24,6 +24,34 @@ function export_xml_escape(string $value): string
     return htmlspecialchars($value, ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+function export_only_digits(string $value): string
+{
+    return preg_replace('/\D+/', '', $value) ?? '';
+}
+
+function export_format_cnpj(string $value): string
+{
+    $digits = substr(export_only_digits($value), 0, 14);
+
+    if (strlen($digits) !== 14) {
+        $trimmed = trim($value);
+        return $trimmed !== '' ? $trimmed : 'Nao informado';
+    }
+
+    return preg_replace('/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/', '$1.$2.$3/$4-$5', $digits) ?: $value;
+}
+
+function export_format_cep(string $value): string
+{
+    $digits = substr(export_only_digits($value), 0, 8);
+
+    if (strlen($digits) !== 8) {
+        return trim($value);
+    }
+
+    return preg_replace('/^(\d{5})(\d{3})$/', '$1-$2', $digits) ?: $value;
+}
+
 function export_sections_meta(): array
 {
     return [
@@ -33,6 +61,18 @@ function export_sections_meta(): array
         'heatmap' => 'Matriz de Risco Geral',
         'actionPlan' => 'Plano de Ação Recomendado',
     ];
+}
+
+function export_page_label(string $key): string
+{
+    $labels = export_sections_meta() + [
+        'summaryOverview' => 'Resumo Executivo',
+        'summaryQuestions' => 'Perguntas Aplicadas e Cálculos',
+        'heatmapOverview' => 'Matriz de Risco',
+        'heatmapResults' => 'Resultados da Matriz',
+    ];
+
+    return $labels[$key] ?? $key;
 }
 
 function export_parse_sections(array $input): array
@@ -60,6 +100,10 @@ function export_build_page_sequence(array $sections): array
 {
     $pages = [];
     $currentPage = 1;
+    $pageKeysBySection = [
+        'summary' => ['summaryOverview', 'summaryQuestions'],
+        'heatmap' => ['heatmapOverview', 'heatmapResults'],
+    ];
 
     if (in_array('cover', $sections, true)) {
         $pages[] = ['key' => 'cover', 'pageNumber' => $currentPage++];
@@ -71,7 +115,9 @@ function export_build_page_sequence(array $sections): array
             continue;
         }
 
-        $pages[] = ['key' => $section, 'pageNumber' => $currentPage++];
+        foreach (($pageKeysBySection[$section] ?? [$section]) as $key) {
+            $pages[] = ['key' => $key, 'parentKey' => $section, 'pageNumber' => $currentPage++];
+        }
     }
 
     return $pages;
@@ -121,6 +167,22 @@ function export_join_values(array $items, string $fallback = 'Todos os setores s
     }
 
     return implode(', ', $normalized);
+}
+
+function export_company_address(array $company): array
+{
+    $street = trim((string) ($company['street'] ?? ''));
+    $streetNumber = trim((string) ($company['streetNumber'] ?? ''));
+    $cep = export_format_cep(trim((string) ($company['cep'] ?? '')));
+    $primary = implode(', ', array_values(array_filter([
+        $street,
+        $streetNumber !== '' ? 'Nº ' . $streetNumber : '',
+    ])));
+
+    return [
+        'primary' => $primary !== '' ? $primary : 'Endereco nao informado',
+        'secondary' => $cep !== '' ? 'CEP ' . $cep : '',
+    ];
 }
 
 function export_build_final_considerations(array $payload): array
@@ -436,6 +498,7 @@ function export_build_excel_rows(array $payload, array $sections): array
     $statusBreakdown = $payload['statusBreakdown'] ?? [];
     $distribution = $payload['distribution'] ?? ['low' => 0, 'medium' => 0, 'high' => 0];
     $finalConsiderations = export_build_final_considerations($payload);
+    $companyAddress = export_company_address($company);
 
     if (in_array('cover', $sections, true)) {
         $coverRows = [
@@ -446,6 +509,14 @@ function export_build_excel_rows(array $payload, array $sections): array
             [
                 ['value' => 'Empresa', 'style' => 3],
                 ['value' => (string) ($company['name'] ?? 'Empresa'), 'style' => 4],
+            ],
+            [
+                ['value' => 'CNPJ', 'style' => 3],
+                ['value' => export_format_cnpj((string) ($company['cnpj'] ?? '')), 'style' => 4],
+            ],
+            [
+                ['value' => 'Endereco', 'style' => 3],
+                ['value' => $companyAddress['primary'] . ($companyAddress['secondary'] !== '' ? ' | ' . $companyAddress['secondary'] : ''), 'style' => 4],
             ],
             [
                 ['value' => 'Periodo', 'style' => 3],
@@ -475,7 +546,7 @@ function export_build_excel_rows(array $payload, array $sections): array
             }
 
             $coverRows[] = [
-                ['value' => (string) (export_sections_meta()[$entry['key']] ?? $entry['key']), 'style' => 4],
+                ['value' => export_page_label((string) $entry['key']), 'style' => 4],
                 ['value' => (int) $entry['pageNumber'], 'style' => 4, 'type' => 'number'],
             ];
         }
@@ -787,7 +858,6 @@ function export_pdf_badge(string $label, string $slug): string
 
 function export_pdf_build_index_rows(array $pageSequence): string
 {
-    $meta = export_sections_meta();
     $rows = '';
     $indexNumber = 1;
 
@@ -796,7 +866,7 @@ function export_pdf_build_index_rows(array $pageSequence): string
             continue;
         }
 
-        $label = $meta[$entry['key']] ?? (string) $entry['key'];
+        $label = export_page_label((string) $entry['key']);
         $rows .= '<div class="pdf-index-row"><span>' . $indexNumber . '. ' . export_escape($label) . '</span><strong>' . str_pad((string) $entry['pageNumber'], 2, '0', STR_PAD_LEFT) . '</strong></div>';
         $indexNumber++;
     }
@@ -915,6 +985,7 @@ function export_pdf_render(array $payload, array $sections): string
     $actionPlan = $payload['actionPlan'] ?? [];
     $heatmapItems = $payload['heatmapItems'] ?? [];
     $selectedFormName = (string) (($company['selectedFormName'] ?? $company['activeFormName'] ?? '') ?: 'Nao vinculado');
+    $companyAddress = export_company_address($company);
     $finalConsiderations = export_build_final_considerations($payload);
     $printStylesheet = export_load_print_stylesheet();
     $pagesMarkup = '';
@@ -935,6 +1006,8 @@ function export_pdf_render(array $payload, array $sections): string
                 <span class="pdf-line"></span>
                 <div class="pdf-cover-meta">
                   <div><span>ORGANIZACAO AVALIADA</span><strong>' . export_escape((string) ($company['name'] ?? 'Empresa')) . '</strong></div>
+                  <div><span>CNPJ</span><strong>' . export_escape(export_format_cnpj((string) ($company['cnpj'] ?? ''))) . '</strong></div>
+                  <div class="pdf-cover-meta__item pdf-cover-meta__item--wide"><span>ENDERECO REGISTRADO</span><strong>' . export_escape($companyAddress['primary']) . '</strong>' . ($companyAddress['secondary'] !== '' ? '<small>' . export_escape($companyAddress['secondary']) . '</small>' : '') . '</div>
                   <div><span>PERIODO DE REFERENCIA</span><strong>' . export_escape((string) ($summary['periodLabel'] ?? 'Todo o historico')) . '</strong></div>
                   <div><span>FORMULARIO ATIVO</span><strong>' . export_escape($selectedFormName) . '</strong></div>
                   <div><span>DATA DE EMISSAO</span><strong>' . export_escape((string) ($summary['emittedAt'] ?? '')) . '</strong></div>
@@ -967,7 +1040,7 @@ function export_pdf_render(array $payload, array $sections): string
             continue;
         }
 
-        if ($key === 'summary') {
+        if (in_array($key, ['summaryOverview', 'summaryQuestions'], true)) {
             $statusRows = '';
             $methodologyRows = '';
             $appliedQuestionRows = '';
@@ -1006,45 +1079,56 @@ function export_pdf_render(array $payload, array $sections): string
                 $appliedQuestionRows = '<tr><td colspan="6" class="pdf-empty-cell">Nenhuma pergunta aplicada foi encontrada para este formulario.</td></tr>';
             }
 
+            if ($key === 'summaryOverview') {
+                $pagesMarkup .= '
+                  <section class="page page--summary">
+                    <h2 class="pdf-section-title">Resumo Executivo</h2>
+                    <p class="pdf-paragraph">Esta secao apresenta as metricas consolidadas das respostas salvas, refletindo participacao, conformidade, risco medio e pontos de maior atencao.</p>
+                    <div class="pdf-metrics">
+                      <article class="pdf-metric"><span>INDICE GLOBAL DE RISCO</span><strong>' . export_format_int((int) ($summary['riskIndex'] ?? 0)) . '/100</strong><em>' . export_escape((string) ($summary['riskLabel'] ?? 'Sem dados')) . '</em></article>
+                      <article class="pdf-metric"><span>PARTICIPACAO</span><strong>' . export_format_int((int) ($summary['participationRate'] ?? 0)) . '%</strong><em>' . export_format_int((int) ($summary['completedSessions'] ?? 0)) . ' sessoes concluidas</em></article>
+                      <article class="pdf-metric"><span>CONFORMIDADE</span><strong>' . export_format_int((int) ($summary['complianceRate'] ?? 0)) . '%</strong><em>' . export_format_int((int) ($summary['totalSessions'] ?? 0)) . ' sessoes no periodo</em></article>
+                      <article class="pdf-metric"><span>FATORES NO PGR</span><strong>' . export_format_int((int) ($summary['pgrFactorsCount'] ?? 0)) . '</strong><em>' . export_escape((string) ($summary['pgrLabel'] ?? 'Sem dados')) . '</em></article>
+                    </div>
+                    <div class="pdf-grid-2">
+                      <article class="pdf-card">
+                        <h3>Status das coletas</h3>
+                        <table class="pdf-table"><tbody>' . $statusRows . '</tbody></table>
+                      </article>
+                      <article class="pdf-card">
+                        <h3>Distribuicao de risco</h3>
+                        <div class="pdf-distribution-list">
+                          <div><span>Risco Baixo</span><strong>' . export_format_int((int) ($distribution['low'] ?? 0)) . '</strong></div>
+                          <div><span>Risco Moderado</span><strong>' . export_format_int((int) ($distribution['medium'] ?? 0)) . '</strong></div>
+                          <div><span>Risco Alto</span><strong>' . export_format_int((int) ($distribution['high'] ?? 0)) . '</strong></div>
+                        </div>
+                      </article>
+                    </div>
+                    <div class="pdf-grid-2 pdf-grid-2--top">
+                      <article class="pdf-card">
+                        <h3>Metodologia aplicada</h3>
+                        <div class="pdf-factor-list">' . $methodologyRows . '</div>
+                      </article>
+                      <article class="pdf-card">
+                        <h3>Formula consolidada</h3>
+                        <div class="pdf-distribution-list">
+                          <div><span>Probabilidade media</span><strong>' . export_format_decimal((float) ($summary['averageProbability'] ?? 0)) . '</strong></div>
+                          <div><span>Efeito medio</span><strong>' . export_format_decimal((float) ($summary['averageEffect'] ?? 0)) . '</strong></div>
+                          <div><span>Resultado do risco</span><strong>' . export_format_decimal((float) ($summary['riskScore'] ?? 0)) . '</strong></div>
+                        </div>
+                        <p class="pdf-paragraph pdf-paragraph--compact">' . export_escape((string) ($methodology['pgrCriterion'] ?? '')) . '</p>
+                      </article>
+                    </div>
+                    <span class="page__number">Pagina ' . $pageNumber . '</span>
+                  </section>
+                ';
+                continue;
+            }
+
             $pagesMarkup .= '
-              <section class="page">
-                <h2 class="pdf-section-title">Resumo Executivo</h2>
-                <p class="pdf-paragraph">Esta secao apresenta as metricas consolidadas das respostas salvas, refletindo participacao, conformidade, risco medio e pontos de maior atencao.</p>
-                <div class="pdf-metrics">
-                  <article class="pdf-metric"><span>INDICE GLOBAL DE RISCO</span><strong>' . export_format_int((int) ($summary['riskIndex'] ?? 0)) . '/100</strong><em>' . export_escape((string) ($summary['riskLabel'] ?? 'Sem dados')) . '</em></article>
-                  <article class="pdf-metric"><span>PARTICIPACAO</span><strong>' . export_format_int((int) ($summary['participationRate'] ?? 0)) . '%</strong><em>' . export_format_int((int) ($summary['completedSessions'] ?? 0)) . ' sessoes concluidas</em></article>
-                  <article class="pdf-metric"><span>CONFORMIDADE</span><strong>' . export_format_int((int) ($summary['complianceRate'] ?? 0)) . '%</strong><em>' . export_format_int((int) ($summary['totalSessions'] ?? 0)) . ' sessoes no periodo</em></article>
-                  <article class="pdf-metric"><span>FATORES NO PGR</span><strong>' . export_format_int((int) ($summary['pgrFactorsCount'] ?? 0)) . '</strong><em>' . export_escape((string) ($summary['pgrLabel'] ?? 'Sem dados')) . '</em></article>
-                </div>
-                <div class="pdf-grid-2">
-                  <article class="pdf-card">
-                    <h3>Status das coletas</h3>
-                    <table class="pdf-table"><tbody>' . $statusRows . '</tbody></table>
-                  </article>
-                  <article class="pdf-card">
-                    <h3>Distribuicao de risco</h3>
-                    <div class="pdf-distribution-list">
-                      <div><span>Risco Baixo</span><strong>' . export_format_int((int) ($distribution['low'] ?? 0)) . '</strong></div>
-                      <div><span>Risco Moderado</span><strong>' . export_format_int((int) ($distribution['medium'] ?? 0)) . '</strong></div>
-                      <div><span>Risco Alto</span><strong>' . export_format_int((int) ($distribution['high'] ?? 0)) . '</strong></div>
-                    </div>
-                  </article>
-                </div>
-                <div class="pdf-grid-2 pdf-grid-2--top">
-                  <article class="pdf-card">
-                    <h3>Metodologia aplicada</h3>
-                    <div class="pdf-factor-list">' . $methodologyRows . '</div>
-                  </article>
-                  <article class="pdf-card">
-                    <h3>Formula consolidada</h3>
-                    <div class="pdf-distribution-list">
-                      <div><span>Probabilidade media</span><strong>' . export_format_decimal((float) ($summary['averageProbability'] ?? 0)) . '</strong></div>
-                      <div><span>Efeito medio</span><strong>' . export_format_decimal((float) ($summary['averageEffect'] ?? 0)) . '</strong></div>
-                      <div><span>Resultado do risco</span><strong>' . export_format_decimal((float) ($summary['riskScore'] ?? 0)) . '</strong></div>
-                    </div>
-                    <p class="pdf-paragraph pdf-paragraph--compact">' . export_escape((string) ($methodology['pgrCriterion'] ?? '')) . '</p>
-                  </article>
-                </div>
+              <section class="page page--summary">
+                <h2 class="pdf-section-title">Perguntas Aplicadas e Calculos</h2>
+                <p class="pdf-paragraph">Esta pagina apresenta as perguntas com maior media de risco e a base usada para calcular probabilidade, efeito e classificacao.</p>
                 <div class="pdf-card pdf-card--spaced">
                   <h3>Perguntas com maior media</h3>
                   ' . export_pdf_build_question_rows($questionRankings) . '
@@ -1120,7 +1204,7 @@ function export_pdf_render(array $payload, array $sections): string
             continue;
         }
 
-        if ($key === 'heatmap') {
+        if (in_array($key, ['heatmapOverview', 'heatmapResults'], true)) {
             $mappedFactors = '';
             $methodFactorRows = '';
             $matrixRows = '';
@@ -1192,22 +1276,33 @@ function export_pdf_render(array $payload, array $sections): string
                 $factorTableRows = '<tr><td colspan="7" class="pdf-empty-cell">Nao ha fatores consolidados suficientes para exibir o calculo do risco.</td></tr>';
             }
 
+            if ($key === 'heatmapOverview') {
+                $pagesMarkup .= '
+                  <section class="page">
+                    <h2 class="pdf-section-title">Matriz de Risco Geral</h2>
+                    <p class="pdf-paragraph">A matriz cruza a probabilidade media das respostas (escala de 1 a 5) com o efeito fixo atribuido ao fator psicossocial. O resultado final do risco e calculado por probabilidade x efeito.</p>
+                    <div class="pdf-grid-2 pdf-grid-2--top">
+                      <article class="pdf-card">
+                        <h3>Definicao do efeito por fator</h3>
+                        <div class="pdf-factor-list">' . $methodFactorRows . '</div>
+                      </article>
+                      <article class="pdf-card">
+                        <h3>Classificacao da matriz e criterio do PGR</h3>
+                        <div class="pdf-factor-list">' . $matrixRows . '</div>
+                        <p class="pdf-paragraph pdf-paragraph--compact">' . export_escape((string) ($methodology['pgrCriterion'] ?? '')) . '</p>
+                      </article>
+                    </div>
+                    ' . export_pdf_build_heatmap_markup($heatmapItems) . '
+                    <span class="page__number">Pagina ' . $pageNumber . '</span>
+                  </section>
+                ';
+                continue;
+            }
+
             $pagesMarkup .= '
               <section class="page">
-                <h2 class="pdf-section-title">Matriz de Risco Geral</h2>
-                <p class="pdf-paragraph">A matriz cruza a probabilidade media das respostas (escala de 1 a 5) com o efeito fixo atribuido ao fator psicossocial. O resultado final do risco e calculado por probabilidade x efeito.</p>
-                <div class="pdf-grid-2 pdf-grid-2--top">
-                  <article class="pdf-card">
-                    <h3>Definicao do efeito por fator</h3>
-                    <div class="pdf-factor-list">' . $methodFactorRows . '</div>
-                  </article>
-                  <article class="pdf-card">
-                    <h3>Classificacao da matriz e criterio do PGR</h3>
-                    <div class="pdf-factor-list">' . $matrixRows . '</div>
-                    <p class="pdf-paragraph pdf-paragraph--compact">' . export_escape((string) ($methodology['pgrCriterion'] ?? '')) . '</p>
-                  </article>
-                </div>
-                ' . export_pdf_build_heatmap_markup($heatmapItems) . '
+                <h2 class="pdf-section-title">Resultados da Matriz</h2>
+                <p class="pdf-paragraph">Esta pagina reune os fatores mapeados na matriz e o consolidado final usado para definir classificacao, prioridade e inclusao no PGR.</p>
                 <div class="pdf-card pdf-card--spaced">
                   <h3>Fatores mapeados</h3>
                   <div class="pdf-factor-list">' . $mappedFactors . '</div>

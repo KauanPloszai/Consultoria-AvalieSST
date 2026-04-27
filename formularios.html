@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AvaliESST | Formulários</title>
-    <link rel="stylesheet" href="dashboard.css?v=20260422modal2" />
+    <link rel="stylesheet" href="dashboard.css?v=20260425resp4" />
   </head>
   <body class="dashboard-body">
     <header class="app-header">
@@ -179,8 +179,11 @@
           <p class="form-builder__feedback" data-form-feedback aria-live="polite"></p>
 
           <div class="form-builder__actions">
-            <button class="form-builder__ghost" type="button" data-close-form-modal>Cancelar</button>
-            <button class="form-builder__primary" type="submit">Salvar formulário</button>
+            <button class="form-builder__ghost form-builder__ghost--danger" type="button" data-delete-form hidden>Excluir formulário</button>
+            <div class="form-builder__actions-group">
+              <button class="form-builder__ghost" type="button" data-close-form-modal>Cancelar</button>
+              <button class="form-builder__primary" type="submit">Salvar formulário</button>
+            </div>
           </div>
         </form>
       </div>
@@ -264,7 +267,7 @@
     </div>
 
     <script src="api-client.js?v=20260421u2"></script>
-    <script src="dashboard.js?v=20260421ort1"></script>
-    <script src="formularios.js?v=20260421ort1"></script>
+    <script src="dashboard.js?v=20260425resp4"></script>
+    <script src="formularios.js?v=20260425edit1"></script>
   </body>
 </html>

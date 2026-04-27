@@ -12,6 +12,7 @@ const formStatusInput = document.querySelector("[data-form-status-input]");
 const questionList = document.querySelector("[data-question-list]");
 const addQuestionButton = document.querySelector("[data-add-question]");
 const formFeedback = document.querySelector("[data-form-feedback]");
+const deleteFormButton = document.querySelector("[data-delete-form]");
 
 const linkModal = document.querySelector("[data-link-modal]");
 const closeLinkModalButtons = document.querySelectorAll("[data-close-link-modal]");
@@ -563,6 +564,10 @@ function openFormModal(mode = "create", form = null) {
     formModalTitle.textContent = mode === "edit" ? "Editar Formulário" : "Novo Formulário";
   }
 
+  if (deleteFormButton) {
+    deleteFormButton.hidden = mode !== "edit" || !editingFormId;
+  }
+
   formModal.hidden = false;
   document.body.classList.add("modal-open");
 
@@ -771,6 +776,35 @@ async function handleFormSubmit(event) {
   }
 }
 
+async function handleDeleteForm() {
+  if (!editingFormId) {
+    return;
+  }
+
+  const form = getFormById(editingFormId);
+  const linkedCount = Number(form?.linkedCompaniesCount || 0);
+  const linkedMessage = linkedCount > 0
+    ? ` Ele está vinculado a ${linkedCount} empresa(s), e esses vínculos também serão removidos.`
+    : "";
+
+  if (!window.confirm(`Deseja excluir o formulário "${form?.name || editingFormId}"?${linkedMessage}`)) {
+    return;
+  }
+
+  try {
+    formFeedback.textContent = "Excluindo formulário...";
+    formFeedback.classList.remove("is-success");
+
+    await window.apiClient.delete(`api/forms.php?id=${encodeURIComponent(editingFormId)}`);
+
+    await loadForms();
+    closeFormModal();
+  } catch (error) {
+    formFeedback.textContent = error.message || "Não foi possível excluir o formulário.";
+    formFeedback.classList.remove("is-success");
+  }
+}
+
 async function handleLinkSubmit(event) {
   event.preventDefault();
 
@@ -893,6 +927,7 @@ function initializeFormBuilderModal() {
   });
 
   formBuilder.addEventListener("submit", handleFormSubmit);
+  deleteFormButton?.addEventListener("click", () => void handleDeleteForm());
   questionList?.addEventListener("click", handleQuestionListClick);
 }
 

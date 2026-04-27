@@ -85,9 +85,10 @@ button {
 .page {
   position: relative;
   width: min(100%, 210mm);
+  max-width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 28mm 16mm 22mm;
+  padding: 28mm 16mm 34mm;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(250, 252, 255, 0.99) 100%);
   border: 1px solid var(--pdf-border);
@@ -95,6 +96,12 @@ button {
   box-shadow: 0 16px 38px rgba(12, 24, 49, 0.08);
   break-after: page;
   page-break-after: always;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.page:not(.page--cover) {
+  padding-bottom: 34mm;
 }
 
 .page:last-child {
@@ -154,6 +161,8 @@ button {
   flex-direction: column;
   justify-content: flex-start;
   padding-top: 18mm;
+  padding-bottom: 40mm;
+  overflow: hidden;
   background:
     radial-gradient(circle at top right, rgba(31, 116, 255, 0.18), transparent 30%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 251, 255, 0.99) 100%);
@@ -169,17 +178,17 @@ button {
 }
 
 .pdf-brand img {
-  width: 54mm;
+  width: 48mm;
   max-width: 100%;
   height: auto;
   display: block;
-  margin-top: 20mm;
+  margin-top: 12mm;
 }
 
 .pdf-kicker {
   display: inline-flex;
   align-items: center;
-  margin-top: 14mm;
+  margin-top: 10mm;
   color: var(--pdf-blue);
   font-size: 10pt;
   font-weight: 800;
@@ -188,11 +197,11 @@ button {
 }
 
 h1 {
-  max-width: 132mm;
-  margin: 5mm 0 0;
+  max-width: 126mm;
+  margin: 4mm 0 0;
   color: var(--pdf-blue-dark);
-  font-size: 27pt;
-  line-height: 1.05;
+  font-size: 24pt;
+  line-height: 1.02;
   letter-spacing: -0.04em;
   word-break: normal;
   overflow-wrap: break-word;
@@ -228,15 +237,19 @@ h3 {
 }
 
 .pdf-cover-meta {
-  margin-top: 11mm;
+  margin-top: 8mm;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4.2mm;
+  gap: 3mm;
+}
+
+.pdf-cover-meta__item--wide {
+  grid-column: 1 / -1;
 }
 
 .pdf-cover-meta > div {
-  min-height: 28mm;
-  padding: 5mm;
+  min-height: 23mm;
+  padding: 4.2mm 4.5mm;
   border: 0.35mm solid var(--pdf-border);
   border-radius: 5mm;
   background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
@@ -262,13 +275,25 @@ h3 {
   line-height: 1.4;
 }
 
+.pdf-cover-meta small {
+  display: block;
+  margin-top: 2mm;
+  color: #7f8da1;
+  font-size: 8.4pt;
+  line-height: 1.45;
+}
+
 .pdf-footer {
-  margin-top: auto;
+  position: absolute;
+  left: 16mm;
+  right: 16mm;
+  bottom: 22mm;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 6mm;
-  padding-top: 6mm;
+  margin-top: 0;
+  padding-top: 4mm;
   border-top: 0.35mm solid #dfe8f4;
 }
 
@@ -323,6 +348,8 @@ h3 {
   color: #56657a;
   font-size: 10pt;
   line-height: 1.7;
+  text-align: justify;
+  text-justify: inter-word;
 }
 
 .pdf-paragraph + .pdf-paragraph,
@@ -378,6 +405,8 @@ h3 {
   color: #56657a;
   font-size: 9.3pt;
   line-height: 1.65;
+  text-align: justify;
+  text-justify: inter-word;
 }
 
 .pdf-metrics {
@@ -434,6 +463,71 @@ h3 {
 
 .pdf-grid-2--top {
   align-items: start;
+}
+
+.page--summary {
+  padding-bottom: 36mm;
+}
+
+.page--summary .pdf-paragraph {
+  font-size: 9.2pt;
+  line-height: 1.55;
+}
+
+.page--summary .pdf-metrics {
+  gap: 2.4mm;
+  margin-top: 4mm;
+}
+
+.page--summary .pdf-metric {
+  min-height: 25mm;
+  padding: 4mm;
+}
+
+.page--summary .pdf-metric span {
+  font-size: 7pt;
+}
+
+.page--summary .pdf-metric strong {
+  margin-top: 2.2mm;
+  font-size: 17pt;
+}
+
+.page--summary .pdf-metric em {
+  margin-top: 1.7mm;
+  font-size: 7.5pt;
+}
+
+.page--summary .pdf-grid-2 {
+  gap: 3mm;
+  margin-top: 4mm;
+}
+
+.page--summary .pdf-card,
+.page--summary .pdf-note-card {
+  margin-top: 4mm;
+  padding: 4mm;
+}
+
+.page--summary .pdf-factor-list,
+.page--summary .pdf-list-card {
+  gap: 2mm;
+  margin-top: 2mm;
+}
+
+.page--summary .pdf-factor-row {
+  grid-template-columns: 5.8mm minmax(0, 1fr);
+  gap: 2.4mm;
+}
+
+.page--summary .pdf-factor-row i {
+  width: 5.8mm;
+  height: 5.8mm;
+}
+
+.page--summary .pdf-factor-row span {
+  font-size: 7.2pt;
+  line-height: 1.42;
 }
 
 .pdf-distribution-list {
@@ -764,10 +858,16 @@ h3 {
 
 @page {
   size: A4 portrait;
-  margin: 12mm;
+  margin: 0;
 }
 
 @media print {
+  html,
+  body {
+    width: 210mm;
+    min-height: 297mm;
+  }
+
   body {
     padding: 0;
     background: #ffffff;
@@ -782,11 +882,11 @@ h3 {
   }
 
   .page {
-    width: auto;
-    max-width: none;
-    min-height: 0;
+    width: 210mm;
+    max-width: 210mm;
+    min-height: 297mm;
     margin: 0;
-    padding: 28mm 16mm 22mm;
+    padding: 28mm 16mm 34mm;
     border: 0;
     border-radius: 0;
     box-shadow: none;
@@ -795,7 +895,9 @@ h3 {
   }
 
   .page--cover {
-    min-height: 273mm;
+    min-height: 297mm;
+    padding-top: 18mm;
+    padding-bottom: 40mm;
   }
 
   .page:last-child {

@@ -24,6 +24,9 @@ const companyFeedback = document.querySelector("[data-company-feedback]");
 const companyNameInput = document.querySelector("[data-company-name]");
 const companyCnpjInput = document.querySelector("[data-company-cnpj]");
 const companyStatusInput = document.querySelector("[data-company-status]");
+const companyCepInput = document.querySelector("[data-company-cep]");
+const companyStreetInput = document.querySelector("[data-company-street]");
+const companyStreetNumberInput = document.querySelector("[data-company-street-number]");
 const companySectorsInput = document.querySelector("[data-company-sectors]");
 const companyEmployeesInput = document.querySelector("[data-company-employees]");
 
@@ -31,6 +34,15 @@ let companiesDb = [];
 let filteredCompanies = [];
 let editingCompanyId = null;
 let currentCompanyPage = 1;
+
+function setCompanyFeedback(message = "", isSuccess = false) {
+  if (!companyFeedback) {
+    return;
+  }
+
+  companyFeedback.textContent = message;
+  companyFeedback.classList.toggle("is-success", Boolean(isSuccess && message));
+}
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (character) => {
@@ -44,6 +56,58 @@ function escapeHtml(value) {
 
     return entityMap[character] || character;
   });
+}
+
+function onlyDigits(value) {
+  return String(value ?? "").replace(/\D+/g, "");
+}
+
+function formatCnpjValue(value) {
+  const digits = onlyDigits(value).slice(0, 14);
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  if (digits.length <= 5) {
+    return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+  }
+
+  if (digits.length <= 8) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+  }
+
+  if (digits.length <= 12) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+function formatCepValue(value) {
+  const digits = onlyDigits(value).slice(0, 8);
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.length <= 5) {
+    return digits;
+  }
+
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
+
+function isValidCompanyCep(value) {
+  return /^\d{5}-?\d{3}$/.test(String(value ?? "").trim());
+}
+
+function isValidCompanyCnpj(value) {
+  return /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/.test(String(value ?? "").trim());
 }
 
 function formatStatusPill(status) {
@@ -175,7 +239,7 @@ function renderCompaniesTable() {
                 <span>ID: ${escapeHtml(company.id)}</span>
               </div>
             </div>
-            <span class="table-text">${escapeHtml(company.cnpj)}</span>
+            <span class="table-text">${escapeHtml(formatCnpjValue(company.cnpj || ""))}</span>
             ${formatStatusPill(company.status)}
             <div class="tag-list">${renderSectorTags(company.sectors)}</div>
             <span class="employee-count">${company.employees}</span>
@@ -315,11 +379,23 @@ function openCompanyModal(mode = "create", company = null) {
   }
 
   if (companyCnpjInput) {
-    companyCnpjInput.value = company?.cnpj || "";
+    companyCnpjInput.value = formatCnpjValue(company?.cnpj || "");
   }
 
   if (companyStatusInput) {
     companyStatusInput.value = company?.status || "active";
+  }
+
+  if (companyCepInput) {
+    companyCepInput.value = formatCepValue(company?.cep || "");
+  }
+
+  if (companyStreetInput) {
+    companyStreetInput.value = company?.street || "";
+  }
+
+  if (companyStreetNumberInput) {
+    companyStreetNumberInput.value = company?.streetNumber || "";
   }
 
   if (companySectorsInput) {
@@ -331,8 +407,7 @@ function openCompanyModal(mode = "create", company = null) {
   }
 
   if (companyFeedback) {
-    companyFeedback.textContent = "";
-    companyFeedback.classList.remove("is-success");
+    setCompanyFeedback("");
   }
 
   if (companyModalTitle) {
@@ -374,42 +449,62 @@ async function handleCompanySubmit(event) {
   event.preventDefault();
 
   const companyName = companyNameInput ? companyNameInput.value.trim() : "";
-  const companyCnpj = companyCnpjInput ? companyCnpjInput.value.trim() : "";
+  const companyCnpj = companyCnpjInput ? formatCnpjValue(companyCnpjInput.value.trim()) : "";
   const companyStatus = companyStatusInput ? companyStatusInput.value : "active";
+  const companyCep = companyCepInput ? formatCepValue(companyCepInput.value.trim()) : "";
+  const companyStreet = companyStreetInput ? companyStreetInput.value.trim() : "";
+  const companyStreetNumber = companyStreetNumberInput ? companyStreetNumberInput.value.trim() : "";
   const companySectors = companySectorsInput ? sanitizeSectors(companySectorsInput.value) : [];
   const companyEmployees = companyEmployeesInput
     ? Math.max(1, Number.parseInt(companyEmployeesInput.value, 10) || 1)
     : 1;
 
   if (!companyName) {
-    companyFeedback.textContent = "Informe o nome da empresa.";
-    companyFeedback.classList.remove("is-success");
+    setCompanyFeedback("Informe o nome da empresa.");
     companyNameInput.focus();
     return;
   }
 
-  if (!companyCnpj) {
-    companyFeedback.textContent = "Informe o CNPJ da empresa.";
-    companyFeedback.classList.remove("is-success");
+  if (!isValidCompanyCnpj(companyCnpj)) {
+    setCompanyFeedback("Informe um CNPJ valido.");
     companyCnpjInput.focus();
     return;
   }
 
+  if (!isValidCompanyCep(companyCep)) {
+    setCompanyFeedback("Informe um CEP valido.");
+    companyCepInput?.focus();
+    return;
+  }
+
+  if (!companyStreet) {
+    setCompanyFeedback("Informe a rua da empresa.");
+    companyStreetInput?.focus();
+    return;
+  }
+
+  if (!companyStreetNumber) {
+    setCompanyFeedback("Informe o numero da empresa.");
+    companyStreetNumberInput?.focus();
+    return;
+  }
+
   if (!companySectors.length) {
-    companyFeedback.textContent = "Informe pelo menos um setor.";
-    companyFeedback.classList.remove("is-success");
+    setCompanyFeedback("Informe pelo menos um setor.");
     companySectorsInput.focus();
     return;
   }
 
   try {
-    companyFeedback.textContent = editingCompanyId ? "Atualizando empresa..." : "Salvando empresa...";
-    companyFeedback.classList.remove("is-success");
+    setCompanyFeedback(editingCompanyId ? "Atualizando empresa..." : "Salvando empresa...");
 
     const payload = {
       id: editingCompanyId,
       name: companyName,
       cnpj: companyCnpj,
+      cep: companyCep,
+      street: companyStreet,
+      streetNumber: companyStreetNumber,
       status: companyStatus,
       sectors: companySectors,
       employees: companyEmployees,
@@ -424,8 +519,7 @@ async function handleCompanySubmit(event) {
     await loadCompanies();
     closeCompanyModal();
   } catch (error) {
-    companyFeedback.textContent = error.message || "Nao foi possivel salvar a empresa.";
-    companyFeedback.classList.remove("is-success");
+    setCompanyFeedback(error.message || "Nao foi possivel salvar a empresa.");
   }
 }
 
@@ -497,6 +591,58 @@ function resetCompanyFilters() {
 }
 
 if (companyTableBody && companyBuilder) {
+  const clearValidationFeedback = () => {
+    setCompanyFeedback("");
+  };
+
+  companyCnpjInput?.addEventListener("input", () => {
+    companyCnpjInput.value = formatCnpjValue(companyCnpjInput.value);
+    clearValidationFeedback();
+  });
+
+  companyCepInput?.addEventListener("input", () => {
+    companyCepInput.value = formatCepValue(companyCepInput.value);
+    clearValidationFeedback();
+  });
+
+  companyCnpjInput?.addEventListener("blur", () => {
+    if (!companyCnpjInput.value.trim()) {
+      return;
+    }
+
+    if (!isValidCompanyCnpj(companyCnpjInput.value)) {
+      setCompanyFeedback("Informe um CNPJ valido.");
+      return;
+    }
+
+    clearValidationFeedback();
+  });
+
+  companyCepInput?.addEventListener("blur", () => {
+    if (!companyCepInput.value.trim()) {
+      return;
+    }
+
+    if (!isValidCompanyCep(companyCepInput.value)) {
+      setCompanyFeedback("Informe um CEP valido.");
+      return;
+    }
+
+    clearValidationFeedback();
+  });
+
+  [
+    companyNameInput,
+    companyStatusInput,
+    companyStreetInput,
+    companyStreetNumberInput,
+    companySectorsInput,
+    companyEmployeesInput,
+  ].forEach((input) => {
+    input?.addEventListener("input", clearValidationFeedback);
+    input?.addEventListener("change", clearValidationFeedback);
+  });
+
   loadCompanies();
 
   if (openCompanyModalButton) {
